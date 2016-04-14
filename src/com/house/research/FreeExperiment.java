@@ -10,12 +10,12 @@ public class FreeExperiment {
 	}
 	//Create a neighborhood
 	
-	public List<MainHouse> create_neighborhood(){
+	public List<House> create_neighborhood(){
 		
 
-		List<MainHouse> casas = new ArrayList<MainHouse>();
+		List<House> casas = new ArrayList<House>();
 		for (int i = 0; i < 5; i++){
-			MainHouse casa = new MainHouse(); // Casa con random appliances
+			House casa = new House(); // Casa con random appliances
 			casas.add(casa);
 		}
 		
@@ -23,23 +23,23 @@ public class FreeExperiment {
 		
 	}
 
-	public void show_appliances(List<MainHouse> casas){
+	public void show_appliances(List<House> casas){
 		
 		
 		for (int i = 0; i < casas.size(); i++){
-			MainHouse casa = casas.get(i);
+			House casa = casas.get(i);
 			System.out.println("House consumes " + casa.kwh + " watts");
 		}
 		
 		
 	}
 	
-	public double neighborhood_consumption(List<MainHouse> houses){
+	public double neighborhood_consumption(List<House> houses){
 		
 		double globalKwH = 0;
 		
 		for (int i = 0; i< houses.size(); i++){
-			MainHouse casa = houses.get(i);
+			House casa = houses.get(i);
 			double kwh = casa.kwh;
 			globalKwH = globalKwH + kwh; 
 		}
@@ -54,7 +54,7 @@ public class FreeExperiment {
 		
 		
 		FreeExperiment vecindario = new FreeExperiment();
-		List<MainHouse> listaCasas = vecindario.create_neighborhood();
+		List<House> listaCasas = vecindario.create_neighborhood();
 		System.out.println("Neighborhood global consumption is " + vecindario.neighborhood_consumption(listaCasas) + " KWH");		
 				
 				

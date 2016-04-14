@@ -2,18 +2,18 @@ package com.house.research;
 
 import java.util.*;
 
-public class MainHouse {
+public class House {
 	//TODO: variables
 	
 	double kwh = 0;
 	List<Appliance> appliances;
 	List<Appliance> randomAppliances;
 	
-	public MainHouse (){
+	public House (){
 		
 		appliances = loadAllAppliances();
 		//randomAppliances = randomizeAppliances(appliances,10);
-		kwh = hour_consumption(randomAppliances);
+		kwh = hour_consumption(appliances);
 		
 	}
 	
@@ -215,25 +215,13 @@ public class MainHouse {
 	}
 	
 	public double hour_consumption (List<Appliance> x) {
-		//get keys
 		
-		double consumo = 0;
-		
+		double hourlyConsumption = 0;
 		for (Appliance item : x){
-			//E(kWh) = P(W) X t(hr)/1000
-			
+			hourlyConsumption = hourlyConsumption + item.getKwh();
 			
 		}
-		List<String> keys = new ArrayList<String>(x.keySet());
-		double kwh = 0;
-		for (int i = 0; i < x.size(); i++){
-			
-			
-			double kwhpa = (x.get(keys.get(i)).doubleValue()* 1)/1000 ;
-			kwh = kwh + kwhpa;
-		}
-		return kwh;
-		 	
+		return hourlyConsumption;
 		
 	}
 	
