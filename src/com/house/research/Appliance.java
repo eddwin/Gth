@@ -6,6 +6,8 @@ public class Appliance {
 	int[] consumptionSchedule;
 	double[] energyToConsume;
 	String name;
+	int weight;
+	
 	
 	public double getKwh() {
 		return kwh;
@@ -35,5 +37,22 @@ public class Appliance {
 		this.energyToConsume = energyToConsume;
 	}
 	
-
+	
+	public int activeOrNot (int hour){
+		
+		if (this.consumptionSchedule[hour] == 1){
+			return 1;
+		} 
+		else{
+			return 0;
+		}
+				
+	}
+	
+	public double getConsumption (int hour){
+		
+		return energyToConsume[hour];
+		
+	}
+		
 }

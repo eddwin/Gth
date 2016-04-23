@@ -2,19 +2,39 @@ package com.house.research;
 
 import java.util.*;
 
-public class House {
+public class House  {
 	//TODO: variables
 	
-	double kwh = 0;
 	List<Appliance> appliances;
 	List<Appliance> randomAppliances;
 	
+
+	double consumo;
+	
+	//Getters and Setters
+	
+	public List<Appliance> getAppliances() {
+		
+		return appliances;
+	}
+	
+	public double getConsumo() {
+		return consumo;
+	}
+
+
+	public void setConsumo(double consumo) {
+		this.consumo = consumo;
+	}
+	//////
+	
+	
+	
+	
 	public House (){
 		
-		appliances = loadAllAppliances();
-		//randomAppliances = randomizeAppliances(appliances,10);
-		kwh = hour_consumption(appliances);
-		
+		this.appliances = loadAllAppliances();
+			
 	}
 	
 	public int[] alwaysOn(){
@@ -22,6 +42,16 @@ public class House {
 		int[] encendidoArray = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 		return encendidoArray;
 		
+	}
+	
+	public int[] eightHoursOn(){
+		int[] encendidoArray = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0};
+		return encendidoArray;
+	}
+	
+	public int[] sixHoursOn(){
+		int[] encendidoArray = {0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
+		return encendidoArray;
 	}
 	
 	public double[] setConsumptionArray(double kwh, int[] array){
@@ -36,7 +66,7 @@ public class House {
 	
 	public int[] doNotInteruptMe(int hours){
 		
-		int[] nonInterruptiveArray = new int[10];
+		int[] nonInterruptiveArray = new int[24];
 		
 		for (int i = 0; i < hours;i++){
 			nonInterruptiveArray[i] = 1;
@@ -47,7 +77,7 @@ public class House {
 	
 	public int[] youCanInterruptMe(int hours){
 		
-		int[] interruptiveArray = new int[10];
+		int[] interruptiveArray = new int[24];
 		
 		for (int i = 0; i < hours;i++){
 			interruptiveArray[i] = 1;
@@ -78,14 +108,14 @@ public class House {
 		Appliance aparato = new Appliance();
 		aparato.setName("Lights_40");
 		aparato.setKwh(0.04);
-		aparato.setConsumptionSchedule(alwaysOn());
+		aparato.setConsumptionSchedule(sixHoursOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("Lights_100");
 		aparato.setKwh(0.10);
-		aparato.setConsumptionSchedule(alwaysOn());
+		aparato.setConsumptionSchedule(eightHoursOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
@@ -96,22 +126,9 @@ public class House {
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
-		
-
-		
-	/*		
-				shiftAppliances.put("lights_40", 40);
-				shiftAppliances.put("lights_100", 100);
-				
-				shiftAppliances.put("intAppliance1", 300);
-				shiftAppliances.put("intAppliance2", 400);
-				shiftAppliances.put("intAppliance3", 150);
-				shiftAppliances.put("intAppliance4", 670);
-				shiftAppliances.put("intAppliance5", 100);
-				shiftAppliances.put("intAppliance6", 900);
-				shiftAppliances.put("intAppliance7", 1250);
-				*/
-				return shiftAppliances;
+	
+	
+		return shiftAppliances;
 	}
 	
 	public List<Appliance> loadNonInterruptiveAppliances(){
@@ -214,16 +231,8 @@ public class House {
 		
 	}
 	
-	public double hour_consumption (List<Appliance> x) {
-		
-		double hourlyConsumption = 0;
-		for (Appliance item : x){
-			hourlyConsumption = hourlyConsumption + item.getKwh();
-			
-		}
-		return hourlyConsumption;
-		
-	}
+	
+	
 	
 
 }
