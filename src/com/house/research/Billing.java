@@ -12,6 +12,9 @@ public class Billing {
 	
 	//
 	double mHourlyBill;
+	
+
+	double mDailyConsumption;
 
 	public double getHourlyBill() {
 		return mHourlyBill;
@@ -19,6 +22,14 @@ public class Billing {
 
 	public void setHourlyBill(double hourlyBill) {
 		mHourlyBill = hourlyBill;
+	}
+	
+	public double getDailyConsumption() {
+		return mDailyConsumption;
+	}
+
+	public void setDailyConsumption(double dailyConsumption) {
+		mDailyConsumption = dailyConsumption;
 	}
 	
 	
@@ -46,5 +57,26 @@ public class Billing {
 			
 		
 	}
+	
+	public void getDailyConsumption(House house){
+		
+		//Daily Consumption = Sum of usage at every hour 
+		double dailyConsumption = 0;
+		double consumo = 0;
+		List<Appliance>  appliances =  house.getAppliances();
+		
+		for (int i = 0; i < appliances.size() ;i++){
+			for (int j = 0; j < 24; j++){
+				int status = appliances.get(i).activeOrNot(j);
+				double consumption = appliances.get(i).getConsumption(j);
+				consumo = status * consumption;
+				dailyConsumption = dailyConsumption + consumo;
+			}
+		}
+		
+		setDailyConsumption(dailyConsumption);
+	}
+	
+
 	
 }

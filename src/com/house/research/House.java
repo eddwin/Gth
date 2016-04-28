@@ -64,6 +64,11 @@ public class House  {
 		
 	}
 	
+	public int randomWeight(){
+		Random random = new Random();
+		return random.nextInt(1);
+	}
+	
 	public int[] doNotInteruptMe(int hours){
 		
 		int[] nonInterruptiveArray = new int[24];
@@ -110,6 +115,7 @@ public class House  {
 		aparato.setKwh(0.04);
 		aparato.setConsumptionSchedule(sixHoursOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 		aparato = new Appliance();
@@ -117,6 +123,7 @@ public class House  {
 		aparato.setKwh(0.10);
 		aparato.setConsumptionSchedule(eightHoursOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 		aparato = new Appliance();
@@ -124,6 +131,7 @@ public class House  {
 		aparato.setKwh(1.2);
 		aparato.setConsumptionSchedule(alwaysOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 	
@@ -142,6 +150,7 @@ public class House  {
 		aparato.setKwh(0.512);
 		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(2)));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 
@@ -151,6 +160,7 @@ public class House  {
 		aparato.setKwh(2.5);
 		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(2)));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
 		//////////////////////////////////////////////
@@ -159,6 +169,7 @@ public class House  {
 		aparato.setKwh(1.2);
 		aparato.setConsumptionSchedule(doNotInteruptMe(1));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
 		
@@ -168,6 +179,7 @@ public class House  {
 		aparato.setKwh(1.3);
 		aparato.setConsumptionSchedule(doNotInteruptMe(2));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
 		
@@ -230,7 +242,6 @@ public class House  {
 		return appliances;
 		
 	}
-	
 	
 	
 	

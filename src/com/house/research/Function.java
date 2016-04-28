@@ -15,4 +15,10 @@ public class Function {
 		
 	}
 	
+	public double dailyHouseConsumption(House home) {
+		Billing bill = new Billing();
+		bill.getDailyConsumption(home);	
+		return bill.getDailyConsumption();
+	}
+	
 }
