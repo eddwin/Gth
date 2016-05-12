@@ -6,9 +6,36 @@ public class Appliance {
 	int[] consumptionSchedule;
 	double[] energyToConsume;
 	String name;
+	int weight;
+	boolean on;
+	double[] costPerHour;
+	double dailyCost;
+
+	
+	public double getDailyCost() {
+		return dailyCost;
+	}
+	public void setDailyCost(double dailyCost) {
+		this.dailyCost = dailyCost;
+	}
+	public double[] getCostPerHour() {
+		return costPerHour;
+	}
+	public void setCostPerHour(double[] costPerHour) {
+		this.costPerHour = costPerHour;
+	}
+	public boolean isShifteable() {
+		return shifteable;
+	}
+	public void setShifteable(boolean shifteable) {
+		this.shifteable = shifteable;
+	}
+
+	boolean shifteable;
+	
+	int operationalHours;
 	
 
-	int weight;
 	
 	public int getWeight() {
 		return weight;
@@ -16,6 +43,20 @@ public class Appliance {
 	public void setWeight(int weight) {
 		this.weight = weight;
 	}
+	public int getOperationalHours() {
+		return operationalHours;
+	}
+	public void setOperationalHours(int operationalHours) {
+		this.operationalHours = operationalHours;
+	}
+
+	public boolean isOn() {
+		return on;
+	}
+	public void setOn(boolean on) {
+		this.on = on;
+	}
+
 	
 	public double getKwh() {
 		return kwh;

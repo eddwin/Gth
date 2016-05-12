@@ -2,7 +2,7 @@ package com.house.research;
 
 import java.util.*;
 
-public class House  {
+public class House {
 	//TODO: variables
 	
 	List<Appliance> appliances;
@@ -11,7 +11,18 @@ public class House  {
 
 	double consumo;
 	
+
+	double budget;
+	
 	//Getters and Setters
+	
+	public double getBudget() {
+		return budget;
+	}
+
+	public void setBudget(double budget) {
+		this.budget = budget;
+	}
 	
 	public List<Appliance> getAppliances() {
 		
@@ -37,21 +48,25 @@ public class House  {
 			
 	}
 	
+	public int[] consumptionSchedule(boolean alwaysOn, int hoursOn, int kwh, int pos){
+		int[] consumptionSchedule = new int[24];
+
+		if (alwaysOn == true){ //Non-Shifteable
+			Arrays.fill(consumptionSchedule, kwh);
+		}else {
+			Arrays.fill(consumptionSchedule, 0);
+			for (int i = pos; i <= pos + hoursOn; i++){
+				consumptionSchedule[i] = kwh;
+			}
+		}
+		return consumptionSchedule;
+	}
+	
 	public int[] alwaysOn(){
 
 		int[] encendidoArray = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 		return encendidoArray;
 		
-	}
-	
-	public int[] eightHoursOn(){
-		int[] encendidoArray = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0};
-		return encendidoArray;
-	}
-	
-	public int[] sixHoursOn(){
-		int[] encendidoArray = {0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0};
-		return encendidoArray;
 	}
 	
 	public double[] setConsumptionArray(double kwh, int[] array){
@@ -62,11 +77,6 @@ public class House  {
 		}
 		return consumtpionArray;
 		
-	}
-	
-	public int randomWeight(){
-		Random random = new Random();
-		return random.nextInt(1);
 	}
 	
 	public int[] doNotInteruptMe(int hours){
@@ -105,83 +115,141 @@ public class House  {
 		return array;
 	}
 	
+	private int[] setOperationalHours(int sTime, int eTime){
+		int[] operational = new int[24];
+		Arrays.fill(operational, 0);
+		
+		for (int i = sTime; i <= eTime; i++){
+			operational[i] = 1;
+		}
+		
+		return operational;
+	}
 	
-	public List<Appliance> loadShiftAppliances() {
-		List<Appliance> shiftAppliances = new ArrayList<Appliance>();
+	public List<Appliance> loadnonShiftAppliances() {
+		List<Appliance> nonShiftAppliances = new ArrayList<Appliance>();
 
 		//////////////////////////////////////////////
 		Appliance aparato = new Appliance();
 		aparato.setName("Lights_40");
 		aparato.setKwh(0.04);
-		aparato.setConsumptionSchedule(sixHoursOn());
+		aparato.setOn(true);
+		aparato.setShifteable(false);
+		aparato.setConsumptionSchedule(alwaysOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
-		shiftAppliances.add(aparato);
+		nonShiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("Lights_100");
 		aparato.setKwh(0.10);
-		aparato.setConsumptionSchedule(eightHoursOn());
+		aparato.setOn(true);
+		aparato.setShifteable(false);
+		aparato.setConsumptionSchedule(alwaysOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
-		shiftAppliances.add(aparato);
+		nonShiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("Fridge");
-		aparato.setKwh(1.2);
+		aparato.setKwh(0.15);
+		aparato.setOn(true);
+		aparato.setShifteable(false);
 		aparato.setConsumptionSchedule(alwaysOn());
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
-		shiftAppliances.add(aparato);
+		nonShiftAppliances.add(aparato);
 		//////////////////////////////////////////////
-	
-	
-		return shiftAppliances;
+		aparato = new Appliance();
+		aparato.setName("air_conditioner");
+		aparato.setKwh(1);
+		aparato.setOn(true);
+		aparato.setShifteable(false);
+		aparato.setConsumptionSchedule(alwaysOn());
+		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		nonShiftAppliances.add(aparato);
+		//////////////////////
+		aparato = new Appliance();
+		aparato.setName("heater");
+		aparato.setKwh(2);
+		aparato.setOn(true);
+		aparato.setShifteable(false);
+		aparato.setConsumptionSchedule(alwaysOn());
+		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		nonShiftAppliances.add(aparato);
+
+				return nonShiftAppliances;
 	}
 	
 	public List<Appliance> loadNonInterruptiveAppliances(){
 		
 		List<Appliance> shiftAppliances = new ArrayList<Appliance>();
-
+		Random random = new Random();
+		int [] num = {1,2,3,4,5};
+		int [] importance = shuffleArray(num);
 
 		//////////////////////////////////////////////
 		Appliance aparato = new Appliance();
 		aparato.setName("washing_machine");
-		aparato.setKwh(0.512);
-		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(2)));
+		aparato.setKwh(0.5);
+		aparato.setShifteable(true);
+		aparato.setWeight(importance[0]);
+		aparato.setOperationalHours(1);
+		int sTime = random.nextInt(22);
+		aparato.setOn(true);
+		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		//////////////////////////////////////////////
 
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("dryer");
-		aparato.setKwh(2.5);
-		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(2)));
+		aparato.setKwh(1);
+		aparato.setWeight(importance[1]);
+		aparato.setOperationalHours(1);
+		sTime = random.nextInt(22);
+		aparato.setOn(true);
+		aparato.setShifteable(true);
+		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("Coffee Maker");
-		aparato.setKwh(1.2);
-		aparato.setConsumptionSchedule(doNotInteruptMe(1));
+		aparato.setKwh(0.8);
+		aparato.setWeight(importance[2]);
+		aparato.setOperationalHours(1);
+		sTime = random.nextInt(22);
+		aparato.setOn(true);
+		aparato.setShifteable(true);
+		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
 		
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("Dishwasher");
-		aparato.setKwh(1.3);
-		aparato.setConsumptionSchedule(doNotInteruptMe(2));
+		aparato.setKwh(0.4);
+		aparato.setWeight(importance[3]);
+		aparato.setOperationalHours(2);
+		sTime = random.nextInt(21);
+		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		aparato.setWeight(randomWeight());
 		shiftAppliances.add(aparato);
 		
+		
+		//////////////////////////////////////////////
+		 aparato = new Appliance();
+		aparato.setName("EV");
+		aparato.setWeight(importance[4]);
+		aparato.setKwh(0.3);
+		aparato.setOperationalHours(8);
+		sTime = random.nextInt(15);
+		aparato.setOn(true);
+		aparato.setShifteable(true);
+		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
+		shiftAppliances.add(aparato);
 		
 		return shiftAppliances;
 		
@@ -194,19 +262,7 @@ public class House  {
 		List<Appliance> interruptiveAppliances = new ArrayList<Appliance>();
 		
 		//////////////////////////////////////////////
-		Appliance aparato = new Appliance();
-		aparato.setName("air_conditioner");
-		aparato.setKwh(0.512);
-		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(9)));
-		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		interruptiveAppliances.add(aparato);
-		//////////////////////////////////////////////
-		 aparato = new Appliance();
-		aparato.setName("EV");
-		aparato.setKwh(2.9);
-		aparato.setConsumptionSchedule(shuffleArray(doNotInteruptMe(5)));
-		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
-		interruptiveAppliances.add(aparato);
+		
 		//////////////////////////////////////////////
 
 				
@@ -219,7 +275,7 @@ public class House  {
 		List<Appliance> appliances = new ArrayList<Appliance>();
 		
 		//All ShiftAppliances
-		List<Appliance> shiftAppliances = loadShiftAppliances();
+		List<Appliance> shiftAppliances = loadnonShiftAppliances();
 		
 		for (Appliance item:shiftAppliances){
 			appliances.add(item);
@@ -242,7 +298,6 @@ public class House  {
 		return appliances;
 		
 	}
-	
 	
 	
 

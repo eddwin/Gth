@@ -13,7 +13,7 @@ public class TheCreator extends Agent {
 		try{
 			//Get container
 			ContainerController container = (ContainerController) getContainerController();
-			for ( int i = 1; i < 50; i++){
+			for ( int i = 0; i <= 5; i++){
 				a1 = container.createNewAgent("house"+i,"com.agents.house.research.HouseAgent", null);
 				a1.start();
 			}
