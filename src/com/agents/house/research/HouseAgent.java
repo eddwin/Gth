@@ -75,9 +75,10 @@ public class HouseAgent extends Agent {
 			   if ((content!= null) && (content.indexOf("initialSchedule") != -1)){
 				   
 
-				   //Get consumption for the next hour for this house
+				   //Get consumption  for this house
 					Function fu = new Function();
 					double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
+					
 					reply.setPerformative(ACLMessage.INFORM);
 					Gson gson = new Gson();
 					String json = gson.toJson(dailyConsumption); //JSONfy
@@ -102,7 +103,64 @@ public class HouseAgent extends Agent {
 		
 	}
 	
-	
+	private class optimizeHouseSchedule extends CyclicBehaviour{
+
+		@Override
+		public void action() {
+			// TODO Auto-generated method stub
+			MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), MessageTemplate.MatchConversationId("prices"));
+			ACLMessage msg = myAgent.receive(mt);
+			
+			if (msg != null){
+				//Message received, process it.
+				String content = msg.getContent();
+				ACLMessage reply  = msg.createReply();
+			
+			 if (content!= null) {
+				 
+				 Gson gson = new Gson();
+				 double [] hourlyPrices = gson.fromJson(content, double[].class);
+				 // Based on hourlyPrices, see what appliances it can be turned off given preference
+					Function fu = new Function();
+
+				 	double nonShiftBudget = fu.CalculateNonShiftBudget(casa.getAppliances());
+					double shiftBudget = casa.getBudget() - nonShiftBudget;
+					
+					if (shiftBudget <= 0){
+						myLogger.log(Logger.INFO, "Over budget for non shift");
+					}
+					else{
+						fu.IWantConvenience(casa.getAppliances(), hourlyPrices, shiftBudget);
+					}
+					
+				//Recalculate energy needs	
+				   //Get consumption for the next hour for this house
+					
+					double dailyConsumption = fu.dailyHouseConsumption(casa);
+					reply.setPerformative(ACLMessage.INFORM);
+					gson = new Gson();
+					String json = gson.toJson(dailyConsumption); //JSONfy
+					reply.setContent(json);
+					reply.setContent(String.valueOf(dailyConsumption));
+					reply.setConversationId("prices");
+					myLogger.log(Logger.INFO, "Agent " + getLocalName() + " reported " + json);
+				} 
+				else {
+					//MEssage is incorrect
+					reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+					reply.setContent("Content not understood");
+				}
+				
+				myAgent.send(reply);
+			}
+			
+			else {
+				block();
+			}
+			
+		}
+		
+	}
 	private class dailyConsumptionSchedule2 extends CyclicBehaviour {
 
 		@Override

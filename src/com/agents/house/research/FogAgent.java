@@ -28,7 +28,7 @@ public class FogAgent extends Agent {
 
 	private AID[] houseAgents;
 	private PowerVariable pv;
-	double[] hourlyLoad = new double[24];
+	double[] clearArray = new double[24];
 	
 	
 	
@@ -41,8 +41,8 @@ public class FogAgent extends Agent {
 		
 		//Initialize variables
 		pv = new PowerVariable();
-		Arrays.fill(hourlyLoad, 0);
-		pv.setHourlyLoadArray(hourlyLoad);
+		Arrays.fill(clearArray, 0);
+		pv.setHourlyLoadArray(clearArray);
 		
 		
 		//Register Fog Agent in YEllow Pages
@@ -93,6 +93,7 @@ public class FogAgent extends Agent {
 		private static final long serialVersionUID = 1L;
 		private int step = 1;
 		private MessageTemplate mt;
+		private MessageTemplate mt2;
 		private int repliesCnt = 0;
 		private double costLoad = 0;
 		
@@ -116,7 +117,7 @@ public class FogAgent extends Agent {
 					break;
 					//End of step 1
 				case 2:
-					//Step 2: receive all initial schedules from house agents
+					//Step 2: receive all  schedules from house agents
 					ACLMessage reply = myAgent.receive(mt); //Receive schedule
 					if (reply != null){			//If message has content (yay!)
 						if (reply.getPerformative() == ACLMessage.INFORM){
@@ -126,12 +127,16 @@ public class FogAgent extends Agent {
 							double [] casaLoad = gson.fromJson(json, double[].class);
 							for (int i = 0; i < 24; i++){
 								cargaHora[i] = cargaHora[i] + casaLoad[i];
-							}	
+							}
+							
 							pv.setHourlyLoadArray(cargaHora);
+							
 						}		
 							repliesCnt++; //To check if everyone is here
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
 								step = 3; //End of step 2
+								pv.setPriceArray(calculateHourlyPrices(pv.getHourlyLoadArray()));
+
 							}
 							
 					}
@@ -142,16 +147,66 @@ public class FogAgent extends Agent {
 					break;
 					
 				case 3:
-					//Step 3: Generate cost array for each hour 
-					pv.setPriceArray(calculateHourlyPrices(pv.getHourlyLoadArray()));
-					double[] prices = pv.getPriceArray();
-					for (double price: prices){
-						System.out.println(price);
+					// Step 4: send prices to house agents
+					ACLMessage response = new ACLMessage(ACLMessage.INFORM);//RQST Message
+					for (int i = 0; i < houseAgents.length; i++){ //To all houses
+						response.addReceiver(houseAgents[i]);
 					}
+					
+					Gson gson = new Gson();
+					String json = gson.toJson(pv.getPriceArray());
+					response.setContent(json);
+					response.setConversationId("prices");
+					response.setReplyWith("Request" + System.currentTimeMillis());
+					myAgent.send(response);
+					//Prepare template to get schedules
+					mt2 = MessageTemplate.and(MessageTemplate.MatchConversationId("prices"), MessageTemplate.MatchInReplyTo(response.getReplyWith()));
+					//Prepare array
+					pv.setHourlyLoadArray(clearArray);
 					step = 4;
-					block();
+					break;
+					//End of step 3
+				case 4: 
+						
+					int positive = 0;
+					int negative = 0;
+					//Step 4: receive all  updated schedules from house agents
+					ACLMessage replyGame = myAgent.receive(mt2); //Receive schedule
+					if (replyGame != null){			//If message has content (yay!)
+						if (replyGame.getPerformative() == ACLMessage.INFORM){ //Someone has changed their schedule
+							positive++;
+							json = replyGame.getContent();
+							gson = new Gson();
+							double[] cargaHora = pv.getHourlyLoadArray();
+							double [] casaLoad = gson.fromJson(json, double[].class);
+							for (int i = 0; i < 24; i++){
+								cargaHora[i] = cargaHora[i] + casaLoad[i];
+							}	
+							pv.setHourlyLoadArray(cargaHora);
+						}	else if (replyGame.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
+							negative++;
+						}
+							repliesCnt++; //To check if everyone is here
+							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
+								if (positive > 0 ) { //Someone changed their schedule
+									System.out.println("One more round");		
+									step = 3; //End of step 4, go back to previous step
+									pv.setPriceArray(calculateHourlyPrices(pv.getHourlyLoadArray()));
+								}else {
+								System.out.println("End of game");
+								step = 5;
+								}
+
+							}
+							
+					}
+					else {
+						block(); //Wait 
+						
+					}
 					break;
 				}
+				
 				
 				
 				
@@ -160,7 +215,7 @@ public class FogAgent extends Agent {
 			@Override
 			public boolean done() {
 				// TODO Auto-generated method stub
-				return (step == 4);
+				return (step == 5);
 			}
 					
 				}
