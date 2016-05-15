@@ -114,19 +114,20 @@ public class House {
 		
 	}
 	
-	private int[] shuffleArray(int[] array)
-	{
-	    int index, temp;
-	    Random random = new Random();
-	    for (int i = array.length - 1; i > 0; i--)
-	    {
-	        index = random.nextInt(i + 1);
-	        temp = array[index];
-	        array[index] = array[i];
-	        array[i] = temp;
+	private int[] shuffleArray(int [] array){
+	    List<Integer> rnum = new ArrayList<Integer>();
+	    int [] newArray = new int[array.length];
+	    for (int i = 0; i < array.length ; i++){
+	    	rnum.add(array[i]);
 	    }
-		return array;
+	    Collections.shuffle(rnum);
+	    for (int i = 0; i < rnum.size() ; i++){
+	    	newArray[i] = rnum.get(i);
+	    }
+		return newArray;
 	}
+	
+	
 	
 	private int[] setOperationalHours(int sTime, int eTime){
 		int[] operational = new int[24];
@@ -172,7 +173,7 @@ public class House {
 		//////////////////////////////////////////////
 		aparato = new Appliance();
 		aparato.setName("air_conditioner");
-		aparato.setKwh(3);
+		aparato.setKwh(1);
 		aparato.setOn(true);
 		aparato.setShifteable(false);
 		aparato.setConsumptionSchedule(alwaysOn());
@@ -180,8 +181,8 @@ public class House {
 		nonShiftAppliances.add(aparato);
 		//////////////////////
 		aparato = new Appliance();
-		aparato.setName("heater");
-		aparato.setKwh(2);
+		aparato.setName("Charger");
+		aparato.setKwh(0.3);
 		aparato.setOn(true);
 		aparato.setShifteable(false);
 		aparato.setConsumptionSchedule(alwaysOn());
@@ -214,7 +215,7 @@ public class House {
 		aparato.setName("washing_machine");
 		aparato.setKwh(0.5);
 		aparato.setShifteable(true);
-		aparato.setOperationalHours(1);
+		aparato.setOperationalHours(2);
 		int sTime = random.nextInt(22);
 		aparato.setWeight(importance[0]);
 		aparato.setOn(true);
@@ -227,7 +228,7 @@ public class House {
 		aparato = new Appliance();
 		aparato.setName("dryer");
 		aparato.setKwh(1);
-		aparato.setOperationalHours(1);
+		aparato.setOperationalHours(2);
 		sTime = random.nextInt(22);
 		aparato.setOn(true);
 		aparato.setWeight(importance[1]);

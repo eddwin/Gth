@@ -95,18 +95,22 @@ public class Billing {
 		double[] hourlyCon = new double[24];
 		Arrays.fill(hourlyCon, 0); //Initialize array
 		List <Appliance> appliances = casa.getAppliances(); //Get Appliances
-		double consumo = 0;
+		double hourlyConsumo = 0;
+		
 		for (int i = 0; i < appliances.size(); i++){ //For each appliance in the house
 			if (appliances.get(i).isOn()){ //If its turned on 
 				for (int j = 0; j < 24; j++){ //each hour 
 					int status = appliances.get(i).activeOrNot(j); //Status at hour j
 					double consumption = appliances.get(i).getConsumption(j);  //Energy needed
-					consumo = status * consumption; 
-					hourlyCon[j] = hourlyCon[j] + consumo; //Store it
+					hourlyConsumo = status * consumption; 
+					hourlyCon[j] = hourlyCon[j] + hourlyConsumo; //Store it
 				}
+				
 			}
 			
+			
 		}
+		
 		
 		return hourlyCon;
 	}

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import com.google.gson.Gson;
+import com.house.research.Function;
 import com.house.research.PowerVariable;
 
 import jade.core.AID;
@@ -29,7 +30,9 @@ public class FogAgent extends Agent {
 	private AID[] houseAgents;
 	private PowerVariable pv;
 	double[] clearArray = new double[24];
-	
+	double Lh;
+	double alpha;
+	int round;
 	
 	
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
@@ -127,15 +130,28 @@ public class FogAgent extends Agent {
 							double [] casaLoad = gson.fromJson(json, double[].class);
 							for (int i = 0; i < 24; i++){
 								cargaHora[i] = cargaHora[i] + casaLoad[i];
+							
 							}
+							
 							
 							pv.setHourlyLoadArray(cargaHora);
 							
 						}		
 							repliesCnt++; //To check if everyone is here
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
+								Function fu = new Function();
+								Lh = fu.getLh24(pv.getHourlyLoadArray());
+								System.out.println("carga");
+								double[]cargas = pv.getHourlyLoadArray();
+								
+								alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
+								
+								System.out.println("Initial Load is: " + Lh);
+								System.out.println("Alpha is: " + alpha);
+								pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
+								
 								step = 3; //End of step 2
-								pv.setPriceArray(calculateHourlyPrices(pv.getHourlyLoadArray()));
+								
 
 							}
 							
@@ -155,6 +171,7 @@ public class FogAgent extends Agent {
 					
 					Gson gson = new Gson();
 					String json = gson.toJson(pv.getPriceArray());
+					
 					response.setContent(json);
 					response.setConversationId("prices");
 					response.setReplyWith("Request" + System.currentTimeMillis());
@@ -162,7 +179,10 @@ public class FogAgent extends Agent {
 					//Prepare template to get schedules
 					mt2 = MessageTemplate.and(MessageTemplate.MatchConversationId("prices"), MessageTemplate.MatchInReplyTo(response.getReplyWith()));
 					//Prepare array
+					Arrays.fill(clearArray, 0);
 					pv.setHourlyLoadArray(clearArray);
+					repliesCnt = 0;
+
 					step = 4;
 					break;
 					//End of step 3
@@ -170,29 +190,45 @@ public class FogAgent extends Agent {
 						
 					int positive = 0;
 					int negative = 0;
+					
 					//Step 4: receive all  updated schedules from house agents
 					ACLMessage replyGame = myAgent.receive(mt2); //Receive schedule
 					if (replyGame != null){			//If message has content (yay!)
 						if (replyGame.getPerformative() == ACLMessage.INFORM){ //Someone has changed their schedule
+							
 							positive++;
-							json = replyGame.getContent();
-							gson = new Gson();
+							 json = replyGame.getContent();
+							 gson = new Gson();
 							double[] cargaHora = pv.getHourlyLoadArray();
 							double [] casaLoad = gson.fromJson(json, double[].class);
 							for (int i = 0; i < 24; i++){
 								cargaHora[i] = cargaHora[i] + casaLoad[i];
-							}	
+							
+							}
 							pv.setHourlyLoadArray(cargaHora);
 						}	else if (replyGame.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
 							negative++;
 						}
 							repliesCnt++; //To check if everyone is here
+					
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
+								
+								Function fu = new Function();
+								Lh = fu.getLh24(pv.getHourlyLoadArray());
+								System.out.println("Hourly load is " + Lh);
+								
 								if (positive > 0 ) { //Someone changed their schedule
-									System.out.println("One more round");		
+									
+									round++;
+									System.out.println("Average price is: " + averagePrice(pv.getHourlyLoadArray()));
+									System.out.println("Round: " + round);		
 									step = 3; //End of step 4, go back to previous step
-									pv.setPriceArray(calculateHourlyPrices(pv.getHourlyLoadArray()));
+									alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
+									System.out.println("Alpha is: " + alpha);
+									pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
+									
 								}else {
+								
 								System.out.println("End of game");
 								step = 5;
 								}
@@ -204,7 +240,7 @@ public class FogAgent extends Agent {
 						block(); //Wait 
 						
 					}
-					break;
+					
 				}
 				
 				
@@ -223,18 +259,38 @@ public class FogAgent extends Agent {
 	
 	
 	
-	public double[] calculateHourlyPrices( double[] hourlyConsumption) {
-		
+	public double[] calculateHourlyPrices( double alpha, double[] hourlyConsumption) {
 		double[] hourlyPrices = new double[24];
 		//alpha*Lh*Log10(lh+1)
-		double alpha = 0.2;
+		//double alpha = 0.2;
 		for (int i = 0; i< 24; i++){
 			hourlyPrices[i] = hourlyConsumption[i] * alpha * Math.log10(hourlyConsumption[i] + 1);
 		}
 		return hourlyPrices;
 		
-		
 	}
 	
+	public double averagePrice (double[] hourlyConsumption){
+		double averagePrice = 0;
+		
+		for(double d:hourlyConsumption ){
+			averagePrice+=d;
+		}
+		averagePrice = averagePrice/hourlyConsumption.length;
+
+		return averagePrice;
+
+	}
+	
+	public double calculateAlpha(double[] hourlyLoad, double dailyLoad){
+		double p = 3.02;
+		double alpha = 0;
+		
+		double upper = (p*dailyLoad);
+		double lower = (Math.pow(dailyLoad, 2))*(Math.log10(dailyLoad+1));
+		alpha = upper/lower;
+		return alpha;
+		
+	}
 	
 }
