@@ -195,7 +195,8 @@ public class FogAgent extends Agent {
 					ACLMessage replyGame = myAgent.receive(mt2); //Receive schedule
 					if (replyGame != null){			//If message has content (yay!)
 						if (replyGame.getPerformative() == ACLMessage.INFORM){ //Someone has changed their schedule
-							
+							Function fu = new Function();
+
 							positive++;
 							 json = replyGame.getContent();
 							 gson = new Gson();
@@ -206,17 +207,20 @@ public class FogAgent extends Agent {
 							
 							}
 							pv.setHourlyLoadArray(cargaHora);
+							System.out.println("Before: " + fu.getLh24(pv.getHourlyLoadArray()));
+
 						}	else if (replyGame.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
 							negative++;
 						}
 							repliesCnt++; //To check if everyone is here
 					
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
-								
 								Function fu = new Function();
+
 								Lh = fu.getLh24(pv.getHourlyLoadArray());
-								System.out.println("Hourly load is " + Lh);
-								
+								System.out.println("Daily load is " + Lh);
+								System.out.println("After: " + fu.getLh24(pv.getHourlyLoadArray()));
+
 								if (positive > 0 ) { //Someone changed their schedule
 									
 									round++;

@@ -19,7 +19,7 @@ public class TheCreator extends Agent {
 		try{
 			//Get container
 			ContainerController container = (ContainerController) getContainerController();
-			for ( int i = 0; i < 100; i++){
+			for ( int i = 0; i < 5; i++){
 				Random random = new Random();
 				//randomBudget = random.nextInt(310);
 				mArgs[1] = 170.0;
