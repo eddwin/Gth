@@ -32,15 +32,14 @@ public class ApplianceFactory {
 		//MAX is 22
 		//TODO: DONT FORGET TO ADD THE WEIGHTS!!!!
 		
-		int[] weight = new int[quantity];
 		
 		Collections.shuffle(shift);
 		for (int i = 0; i < quantity; i++){
 			shift.add(allShifteable.get(i));
 		}
 		
-		for (int i =0; i < shift.size(); i++ ){
-			shift.get(i).setWeight(weight[i]);
+		for (int i = 0; i < shift.size(); i++ ){
+			shift.get(i).setWeight(i+1);
 		}
 		
 		
@@ -127,8 +126,7 @@ public List<Appliance> ShifteableAppliances(){
 		
 		List<Appliance> shiftAppliances = new ArrayList<Appliance>();
 		Random random = new Random();
-		int [] num = {1,2,3,4,5,6,7,8};
-		int [] importance = shuffleArray(num);
+		
 
 		//////////////////////////////////////////////
 		Appliance aparato = new Appliance();
@@ -159,12 +157,11 @@ public List<Appliance> ShifteableAppliances(){
 		aparato = new Appliance();
 		aparato.setName("Coffee Maker");
 		aparato.setKwh(0.8);
-		aparato.setOperationalHours(1);
-		sTime = random.nextInt(22);
+		aparato.setOperationalHours(3);
+		sTime = random.nextInt(20);
 		aparato.setOn(true);
-		aparato.setWeight(importance[2]);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		
@@ -202,7 +199,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -214,7 +211,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -238,7 +235,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -250,7 +247,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(19);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		
@@ -262,7 +259,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(20);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -270,11 +267,11 @@ public List<Appliance> ShifteableAppliances(){
 		aparato = new Appliance();
 		aparato.setName("Hand Iron");
 		aparato.setKwh(1.1);
-		aparato.setOperationalHours(1);
-		sTime = random.nextInt(22);
+		aparato.setOperationalHours(2);
+		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -286,7 +283,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(17);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 								
@@ -306,11 +303,11 @@ public List<Appliance> ShifteableAppliances(){
 		aparato = new Appliance();
 		aparato.setName("Jacuzzi");
 		aparato.setKwh(5.76);
-		aparato.setOperationalHours(2);
-		sTime = random.nextInt(21);
+		aparato.setOperationalHours(3);
+		sTime = random.nextInt(20);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		
@@ -330,11 +327,11 @@ public List<Appliance> ShifteableAppliances(){
 		aparato = new Appliance();
 		aparato.setName("TV");
 		aparato.setKwh(0.286);
-		aparato.setOperationalHours(2);
+		aparato.setOperationalHours(5);
 		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 
@@ -342,11 +339,11 @@ public List<Appliance> ShifteableAppliances(){
 		aparato = new Appliance();
 		aparato.setName("Xbox");
 		aparato.setKwh(0.045);
-		aparato.setOperationalHours(3);
-		sTime = random.nextInt(20);
+		aparato.setOperationalHours(6);
+		sTime = random.nextInt(17);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		
@@ -370,7 +367,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		
@@ -382,7 +379,7 @@ public List<Appliance> ShifteableAppliances(){
 		sTime = random.nextInt(20);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
-		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
+		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
 		shiftAppliances.add(aparato);
 		

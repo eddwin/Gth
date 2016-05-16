@@ -32,6 +32,7 @@ public class FogAgent extends Agent {
 	double[] clearArray = new double[24];
 	double Lh;
 	double alpha;
+	double [] cargaHora = new double[24];
 	int round;
 	
 	
@@ -45,6 +46,7 @@ public class FogAgent extends Agent {
 		//Initialize variables
 		pv = new PowerVariable();
 		Arrays.fill(clearArray, 0);
+		
 		pv.setHourlyLoadArray(clearArray);
 		
 		
@@ -110,6 +112,7 @@ public class FogAgent extends Agent {
 					for (int i = 0; i < houseAgents.length; i++){ //To all houses
 						request.addReceiver(houseAgents[i]);
 					}
+					
 					request.setContent("initialSchedule"); //Asking for initial schedule
 					request.setConversationId("daily-consumption");
 					request.setReplyWith("Request" + System.currentTimeMillis());
@@ -126,7 +129,7 @@ public class FogAgent extends Agent {
 						if (reply.getPerformative() == ACLMessage.INFORM){
 							String json = reply.getContent();
 							Gson gson = new Gson();
-							double[] cargaHora = pv.getHourlyLoadArray();
+							//cargaHora = pv.getHourlyLoadArray();
 							double [] casaLoad = gson.fromJson(json, double[].class);
 							for (int i = 0; i < 24; i++){
 								cargaHora[i] = cargaHora[i] + casaLoad[i];
@@ -134,18 +137,19 @@ public class FogAgent extends Agent {
 							}
 							
 							
-							pv.setHourlyLoadArray(cargaHora);
+							
 							
 						}		
 							repliesCnt++; //To check if everyone is here
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
+								pv.setHourlyLoadArray(cargaHora);
 								Function fu = new Function();
 								Lh = fu.getLh24(pv.getHourlyLoadArray());
 								System.out.println("carga");
 								double[]cargas = pv.getHourlyLoadArray();
 								
-								alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
-								
+								//alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
+								alpha = 0.02;
 								System.out.println("Initial Load is: " + Lh);
 								System.out.println("Alpha is: " + alpha);
 								pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
@@ -200,14 +204,13 @@ public class FogAgent extends Agent {
 							positive++;
 							 json = replyGame.getContent();
 							 gson = new Gson();
-							double[] cargaHora = pv.getHourlyLoadArray();
+							cargaHora = pv.getHourlyLoadArray();
 							double [] casaLoad = gson.fromJson(json, double[].class);
 							for (int i = 0; i < 24; i++){
 								cargaHora[i] = cargaHora[i] + casaLoad[i];
 							
 							}
-							pv.setHourlyLoadArray(cargaHora);
-							System.out.println("Before: " + fu.getLh24(pv.getHourlyLoadArray()));
+							
 
 						}	else if (replyGame.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
 							negative++;
@@ -216,7 +219,7 @@ public class FogAgent extends Agent {
 					
 							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
 								Function fu = new Function();
-
+								pv.setHourlyLoadArray(cargaHora);
 								Lh = fu.getLh24(pv.getHourlyLoadArray());
 								System.out.println("Daily load is " + Lh);
 								System.out.println("After: " + fu.getLh24(pv.getHourlyLoadArray()));
@@ -225,11 +228,12 @@ public class FogAgent extends Agent {
 									
 									round++;
 									System.out.println("Average price is: " + averagePrice(pv.getHourlyLoadArray()));
-									System.out.println("Round: " + round);		
-									step = 3; //End of step 4, go back to previous step
-									alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
+									System.out.println("Round: " + round);	
+									//alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
+									alpha = 0.02;
 									System.out.println("Alpha is: " + alpha);
 									pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
+									step = 3; //End of step 4, go back to previous step
 									
 								}else {
 								
@@ -287,7 +291,7 @@ public class FogAgent extends Agent {
 	}
 	
 	public double calculateAlpha(double[] hourlyLoad, double dailyLoad){
-		double p = 3.02;
+		double p = 2.02;
 		double alpha = 0;
 		
 		double upper = (p*dailyLoad);

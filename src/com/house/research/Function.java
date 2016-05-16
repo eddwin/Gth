@@ -27,6 +27,8 @@ public class Function {
 		return bill.getDailyConsumption();
 	}
 	
+	
+	
 	public double[] getHourlyHouseConsumption (House home){
 		double [] hourlyLoad = new double[24];
 		Arrays.fill(hourlyLoad, 0);
@@ -62,23 +64,23 @@ public class Function {
 
 				
 				//Create a dictionary of weights
-				for(int i = 0; i<shifteable.size();i++ ){
+				for(int i = 0; i< shifteable.size();i++ ){
 					int weight = shifteable.get(i).getWeight();
 					order.put(Integer.toString(weight), shifteable.get(i));
 				}
 				
 				//Get max weight
 				
-				int importance = shifteable.size();
+				int importance = order.size();
 				double totalConsumption = 0;
-				Appliance[] app = null;
 				int[] newSchedule = new int[24];
-
 				for (int i = importance; i > 0; i--){
 					//Allocate resource for highest appliance
 					newSchedule = BestAllocate(order.get(Integer.toString(i)),energyPrices, order.get(Integer.toString(i)).getOperationalHours());
 					//Calculate consumption
 					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)), energyPrices, newSchedule);
+					System.out.println("DailyCost is :" + dailyCost);
+
 					//Check if the added cost of this appliance overuns the budget for this house
 					if ((dailyCost + totalConsumption) <= budget){
 						//If it does, then it can be afforded to be on during the day
@@ -86,279 +88,32 @@ public class Function {
 						//Turn it on
 						order.get(Integer.toString(i)).setOn(true);
 						//Update new consumption total for this round
-						
-					}
-				}
-				
-				
-				
-				
-				
-				
-				int i = 0;
-				switch(importance){
-				case 8:
-					
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					double dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						//Go to next appliance
-						importance = importance - 1;	
-						
-						
-					}
-					
-				case 7:	
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 6:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 5:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-					
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 4:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 3:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 2:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
-						totalConsumption += dailyCost;
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						
-						//Go to next appliance
-						importance = importance - 1;		
-						
-					}
-				case 1:
-					//Allocate resource for highest appliance
-					Arrays.fill(newSchedule, 0);
-					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
-					
-					//Calculate consumption
-					dailyCost = 0;
-					dailyCost = calcuateDailyCost(order.get(Integer.toString(importance)), energyPrices, newSchedule);
-					
-					//if Daily cost of this appliance
-					if ((dailyCost + totalConsumption) <= budget){
-						//It can be afforded
-						//Store new schedule
-						order.get(Integer.toString(importance)).setConsumptionSchedule(newSchedule);
-						//Store new daily cost
-						order.get(Integer.toString(importance)).setDailyCost(dailyCost);
-						//make it double sure
-						order.get(Integer.toString(importance)).setOn(true);
-						//update new consumption total for this round
+						order.get(Integer.toString(i)).setDailyCost(dailyCost);
+						//Update consumption total for this round
 						totalConsumption += dailyCost;
 
-						//Go to next appliance
-						importance = importance - 1;
-						
-					}else {	
+					}
+					else{
 						//It can't be afforded, turn it off
-						
-						order.get(Integer.toString(importance)).setOn(false);; //Turn off everything
-						
-						//Go to next appliance
-						importance = importance - 1;		
+						order.get(Integer.toString(i)).setOn(false); //Turn off	
+						System.out.println("app is :" + (order.get(Integer.toString(i)).isOn()));
 						
 					}
-					
-					break;
-					
-				
-				
 				}
 	}	
 	
 	
-	
+	public double calcuateDailyCost(Appliance a, double[] energyPrices, int[] schedule){
+		double energy = a.getKwh();
+		double dailyCost = 0;
+		
+		for (int i = 0; i < 23; i++){
+			double cost = (schedule[i]*energy*energyPrices[i]);
+			dailyCost += cost;
+		}
+		
+		return dailyCost;
+	}
 	
 	public int [] BestAllocate (Appliance app, double[] energyPrices, int hours ){
 		int [] bestResponse = new int[24];
@@ -477,23 +232,12 @@ public class Function {
 		return lh;
 	}
 	
-	public void storeDailyConsumption(Appliance app, double[]hourlyPrices){
-		double dailyConsumption = 0;
-		
-		double energy = app.getKwh();
-		int[] schedule = app.getConsumptionSchedule();
-		for (int i = 0; i < 23; i++){
-			dailyConsumption+= (schedule[i]*energy*hourlyPrices[i]);
-		}
-		app.setDailyCost(dailyConsumption);
-		
-		
-	}
+	
 	
 	public void calculateHourlyMoneyConsumption(List<Appliance>allAppliances, double[]hourlyPrices){
 		double dailyCost = 0;
 		for(int i =0; i < allAppliances.size(); i++){
-			storeDailyConsumption(allAppliances.get(i), hourlyPrices);
+			dailyCost = calcuateDailyCost(allAppliances.get(i), hourlyPrices, allAppliances.get(i).getConsumptionSchedule());
 			allAppliances.get(i).setDailyCost(dailyCost);
 		}	
 		
