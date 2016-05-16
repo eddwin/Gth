@@ -27,21 +27,27 @@ public class HouseAgent extends Agent {
 	private double[] lastPriceArray;
 	private double initialCost;
 	private double finalCost;
-
+	private int shifteable;
+	private int nonShifteable;
+	private double budget;
 	protected void setup() {
 		
-		//create a house and its appliances
-		casa = new House();
-		initialCost = 0;
-		finalCost = 0;
+		
 		
 		//Get Arguments
 		Object[] args = getArguments();
 		if (args != null && args.length > 0 ){
 			strategy = (String) args[0];
-			casa.setBudget((Double) args[1]);
+			budget = (Double) args[1];
+			shifteable = (Integer) args[2];
+			nonShifteable = (Integer) args[3];
 		}
-		
+		//create a house and its appliances
+				casa = new House(shifteable, nonShifteable);
+				initialCost = 0;
+				finalCost = 0;
+				casa.setBudget(budget);
+				
 		//Register agent in Yellow Pages
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());

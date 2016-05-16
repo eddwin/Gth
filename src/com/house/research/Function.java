@@ -69,14 +69,35 @@ public class Function {
 				
 				//Get max weight
 				
-				int importance = 8;
+				int importance = shifteable.size();
 				double totalConsumption = 0;
 				Appliance[] app = null;
-				int i = 0;
 				int[] newSchedule = new int[24];
+
+				for (int i = importance; i > 0; i--){
+					//Allocate resource for highest appliance
+					newSchedule = BestAllocate(order.get(Integer.toString(i)),energyPrices, order.get(Integer.toString(i)).getOperationalHours());
+					//Calculate consumption
+					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)), energyPrices, newSchedule);
+					//Check if the added cost of this appliance overuns the budget for this house
+					if ((dailyCost + totalConsumption) <= budget){
+						//If it does, then it can be afforded to be on during the day
+						order.get(Integer.toString(i)).setConsumptionSchedule(newSchedule);
+						//Turn it on
+						order.get(Integer.toString(i)).setOn(true);
+						//Update new consumption total for this round
+						
+					}
+				}
+				
+				
+				
+				
+				
+				
+				int i = 0;
 				switch(importance){
 				case 8:
-					//Allocate resource for highest appliance
 					
 					newSchedule = BestAllocate(order.get(Integer.toString(importance)),energyPrices, order.get(Integer.toString(importance)).getOperationalHours());
 					
@@ -337,17 +358,7 @@ public class Function {
 	}	
 	
 	
-	public double calcuateDailyCost(Appliance a, double[] energyPrices, int[] schedule){
-		double energy = a.getKwh();
-		double dailyCost = 0;
-		
-		for (int i = 0; i < 23; i++){
-			double cost = (schedule[i]*energy*energyPrices[i]);
-			dailyCost += cost;
-		}
-		
-		return dailyCost;
-	}
+	
 	
 	public int [] BestAllocate (Appliance app, double[] energyPrices, int hours ){
 		int [] bestResponse = new int[24];
@@ -466,10 +477,23 @@ public class Function {
 		return lh;
 	}
 	
+	public void storeDailyConsumption(Appliance app, double[]hourlyPrices){
+		double dailyConsumption = 0;
+		
+		double energy = app.getKwh();
+		int[] schedule = app.getConsumptionSchedule();
+		for (int i = 0; i < 23; i++){
+			dailyConsumption+= (schedule[i]*energy*hourlyPrices[i]);
+		}
+		app.setDailyCost(dailyConsumption);
+		
+		
+	}
+	
 	public void calculateHourlyMoneyConsumption(List<Appliance>allAppliances, double[]hourlyPrices){
 		double dailyCost = 0;
 		for(int i =0; i < allAppliances.size(); i++){
-			dailyCost = calcuateDailyCost(allAppliances.get(i), hourlyPrices, allAppliances.get(i).getConsumptionSchedule());
+			storeDailyConsumption(allAppliances.get(i), hourlyPrices);
 			allAppliances.get(i).setDailyCost(dailyCost);
 		}	
 		
