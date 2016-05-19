@@ -183,7 +183,6 @@ public class FogAgent extends Agent {
 	}
 
 	public void senderToNextAgent(){
-		System.out.println("Response aqui: " + responseCounter);
 		if (responseCounter < houseAgents.length ){	
 			sendPrice(houseAgents[responseCounter]);			
 		}
@@ -257,7 +256,7 @@ public class FogAgent extends Agent {
 		Lh = 0;
 		for (Map.Entry<String, double[]> entry:preferences.entrySet()){
 			double[] schedule = entry.getValue();
-			for (int i = 0; i < 23; i++){
+			for (int i = 0; i < 24; i++){
 				cargaHora[i]+=schedule[i];
 				
 			}

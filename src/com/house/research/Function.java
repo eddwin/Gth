@@ -169,24 +169,11 @@ public class Function {
 
 	
 	public List<Appliance> getNonShifteableDevices (List<Appliance>  allAppliances) {
-		List<Appliance> shifteable = new ArrayList<Appliance>();
-		
-		for (int i = 0; i< allAppliances.size(); i++){
-			if (allAppliances.get(i).isShifteable()==false){ //If it is shifteable
-				shifteable.add(allAppliances.get(i));//add it to our list
-			}
-		}
-		
-		return shifteable;
-		
-	}
-	
-	public List<Appliance> getShifteableDevices (List<Appliance>  allAppliances) {
 		List<Appliance> nonShifteable = new ArrayList<Appliance>();
 		
 		for (int i = 0; i< allAppliances.size(); i++){
-			if (allAppliances.get(i).isShifteable()){ //If it is non shifteable
-				nonShifteable.add(allAppliances.get(i)); //add it to our list
+			if (allAppliances.get(i).isShifteable()==false){ //If it is non shifteable
+				nonShifteable.add(allAppliances.get(i));//add it to our list
 			}
 		}
 		
@@ -194,8 +181,54 @@ public class Function {
 		
 	}
 	
+	public List<Appliance> getShifteableDevices (List<Appliance>  allAppliances) {
+		List<Appliance> shifteable = new ArrayList<Appliance>();
+		
+		for (int i = 0; i< allAppliances.size(); i++){
+			if (allAppliances.get(i).isShifteable()){ //If it is  shifteable
+				shifteable.add(allAppliances.get(i)); //add it to our list
+			}
+		}
+		
+		return shifteable;
+		
+	}
 	
 	
+	public double getTypeOfApplianceConsumption(List<Appliance> allAppliances, String type){
+		double cost = 0;
+		if (type == "shifteable"){
+			List<Appliance> shifteable = new ArrayList<Appliance>();
+			shifteable = getShifteableDevices(allAppliances);
+			for(Appliance a: shifteable){
+				cost += a.getDailyCost();
+			}
+		}
+		else if(type == "nonShifteable"){
+			List<Appliance> nonShifteable = new ArrayList<Appliance>();
+			nonShifteable = getNonShifteableDevices(allAppliances);
+			for(Appliance a: nonShifteable){
+				cost += a.getDailyCost();
+			}
+		}
+		
+		return cost;
+	}
+	
+	public void calculateAppliancesDailyCost(List<Appliance>allAppliances, double[]hourlyPrice){
+		double cost = 0;
+		for (Appliance a: allAppliances){
+			if (a.isOn()){
+				int schedule[] = a.getConsumptionSchedule();
+				double kwh = a.getKwh();
+				for (int i=0; i<24;i++){
+					double sub = schedule[i] * kwh * hourlyPrice[i];
+					cost+=sub;
+				}
+			}
+			a.setDailyCost(cost);
+		}
+	}
 	
 	public double getShiftConsumption (List<Appliance> allApliances){
 		List<Appliance> shifteable = new ArrayList<Appliance>();
@@ -253,6 +286,44 @@ public class Function {
 		
 		
 	}
+	
+	public double[] getHouseHourlyLoad (List<Appliance> allAppliances){
+		double[] hLoad = new double[24];
+		Arrays.fill(hLoad, 0);
+		for (Appliance a: allAppliances){
+			if (a.isOn()){
+				double kwh = a.getKwh(); 
+				int[] schedule = a.getConsumptionSchedule();
+				for (int i =0; i < 24; i++){
+					double sub = kwh*schedule[i];
+					hLoad[i]+=sub;
+				}
+			}
+		}
+		
+		
+		return hLoad;
+		
+	}
+	
+	public double calculateHouseLoad(List<Appliance> allAppliances){
+		double total = 0;
+		double sub = 0;
+		for (Appliance a: allAppliances){
+			if (a.isOn()){
+				double kwh = a.getKwh();
+				int[] schedule = a.getConsumptionSchedule();
+				for (int i =0; i < 24; i++){
+					sub = kwh * schedule[i];
+					total+=sub;
+				}	
+			}
+			
+		}
+		
+		return total;
+	}
+	
 	
 
 }
