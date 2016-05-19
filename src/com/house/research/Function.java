@@ -37,7 +37,11 @@ public class Function {
 			for (int i = 0; i < 24; i++){
 				hourlyLoad[i] = hourlyLoad[i] + casaLoad[i];
 			}
-			
+			double cargaCasa = 0;
+			for (int i = 0; i<24; i++){
+				cargaCasa+=hourlyLoad[i];
+			}
+			home.setHouseLoad(cargaCasa);
 			
 		return hourlyLoad;	
 	}
@@ -78,8 +82,7 @@ public class Function {
 					//Allocate resource for highest appliance
 					newSchedule = BestAllocate(order.get(Integer.toString(i)),energyPrices, order.get(Integer.toString(i)).getOperationalHours());
 					//Calculate consumption
-					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)), energyPrices, newSchedule);
-					System.out.println("DailyCost is :" + dailyCost);
+					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)).getKwh(), energyPrices, newSchedule);
 
 					//Check if the added cost of this appliance overuns the budget for this house
 					if ((dailyCost + totalConsumption) <= budget){
@@ -91,20 +94,16 @@ public class Function {
 						order.get(Integer.toString(i)).setDailyCost(dailyCost);
 						//Update consumption total for this round
 						totalConsumption += dailyCost;
-
 					}
 					else{
 						//It can't be afforded, turn it off
-						order.get(Integer.toString(i)).setOn(false); //Turn off	
-						System.out.println("app is :" + (order.get(Integer.toString(i)).isOn()));
-						
+						order.get(Integer.toString(i)).setOn(false); //Turn off							
 					}
 				}
 	}	
 	
 	
-	public double calcuateDailyCost(Appliance a, double[] energyPrices, int[] schedule){
-		double energy = a.getKwh();
+	public double calcuateDailyCost(double energy, double[] energyPrices, int[] schedule){
 		double dailyCost = 0;
 		
 		for (int i = 0; i < 23; i++){
@@ -237,7 +236,7 @@ public class Function {
 	public void calculateHourlyMoneyConsumption(List<Appliance>allAppliances, double[]hourlyPrices){
 		double dailyCost = 0;
 		for(int i =0; i < allAppliances.size(); i++){
-			dailyCost = calcuateDailyCost(allAppliances.get(i), hourlyPrices, allAppliances.get(i).getConsumptionSchedule());
+			dailyCost = calcuateDailyCost(allAppliances.get(i).getKwh(), hourlyPrices, allAppliances.get(i).getConsumptionSchedule());
 			allAppliances.get(i).setDailyCost(dailyCost);
 		}	
 		
@@ -254,5 +253,6 @@ public class Function {
 		
 		
 	}
+	
 
 }

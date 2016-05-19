@@ -7,6 +7,15 @@ public class PowerVariable {
 	double[] mHourlyPriceArray;
 	
 
+	int change;
+
+	public int getChanges() {
+		return change;
+	}
+
+	public void setChanges(int responses) {
+		this.change = responses;
+	}
 	double [] mHourlyLoadArray;
 	public double[] getHourlyLoadArray() {
 		return mHourlyLoadArray;

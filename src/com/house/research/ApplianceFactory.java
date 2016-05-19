@@ -134,7 +134,7 @@ public List<Appliance> ShifteableAppliances(){
 		aparato.setKwh(0.5);
 		aparato.setShifteable(true);
 		aparato.setOperationalHours(2);
-		int sTime = random.nextInt(22);
+		int sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
 		aparato.setEnergyToConsume(setConsumptionArray(aparato.getKwh(), aparato.getConsumptionSchedule()));
@@ -146,7 +146,7 @@ public List<Appliance> ShifteableAppliances(){
 		aparato.setName("dryer");
 		aparato.setKwh(1);
 		aparato.setOperationalHours(2);
-		sTime = random.nextInt(22);
+		sTime = random.nextInt(21);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
 		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
@@ -328,7 +328,7 @@ public List<Appliance> ShifteableAppliances(){
 		aparato.setName("TV");
 		aparato.setKwh(0.286);
 		aparato.setOperationalHours(5);
-		sTime = random.nextInt(21);
+		sTime = random.nextInt(18);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
 		aparato.setConsumptionSchedule(shuffleArray(setOperationalHours(sTime, sTime + aparato.getOperationalHours())));
@@ -352,7 +352,7 @@ public List<Appliance> ShifteableAppliances(){
 		aparato.setName("Vacuum Cleaner");
 		aparato.setKwh(0.63);
 		aparato.setOperationalHours(1);
-		sTime = random.nextInt(23);
+		sTime = random.nextInt(22);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
 		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
@@ -388,7 +388,7 @@ public List<Appliance> ShifteableAppliances(){
 		aparato.setName("Toaster");
 		aparato.setKwh(1.146);
 		aparato.setOperationalHours(1);
-		sTime = random.nextInt(23);
+		sTime = random.nextInt(22);
 		aparato.setOn(true);
 		aparato.setShifteable(true);
 		aparato.setConsumptionSchedule(setOperationalHours(sTime, sTime + aparato.getOperationalHours()));
@@ -422,7 +422,7 @@ public List<Appliance> ShifteableAppliances(){
 			int[] operational = new int[24];
 			Arrays.fill(operational, 0);
 			
-			for (int i = sTime; i <= eTime; i++){
+			for (int i = sTime; i < eTime; i++){
 				operational[i] = 1;
 			}
 			

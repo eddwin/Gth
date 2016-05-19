@@ -14,12 +14,26 @@ public class House {
 
 	
 	
-	
 	double houseConsumption;
 	double budget;
 	String strategy;
+	
+
+
+
+
+
+	double houseLoad;
 
 	//Getters and Setters
+	
+	public double getHouseLoad() {
+		return houseLoad;
+	}
+
+	public void setHouseLoad(double houseLoad) {
+		this.houseLoad = houseLoad;
+	}
 	
 	public String getStrategy() {
 		return strategy;

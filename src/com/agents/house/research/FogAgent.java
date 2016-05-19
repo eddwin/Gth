@@ -4,8 +4,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
+import com.house.research.Appliance;
 import com.house.research.Function;
 import com.house.research.PowerVariable;
 
@@ -34,7 +37,14 @@ public class FogAgent extends Agent {
 	double alpha;
 	double [] cargaHora = new double[24];
 	int round;
-	
+	int initCounter;
+	int responseCounter;
+	int numOfAcceptance;
+	int numOfChanges;
+	Map<String, double[]> preferences = new HashMap<String, double[]>();
+	 public final static String DAILY = "daily-consumption";
+	 public final static String PRICE = "prices";
+
 	
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
 	
@@ -48,8 +58,12 @@ public class FogAgent extends Agent {
 		Arrays.fill(clearArray, 0);
 		
 		pv.setHourlyLoadArray(clearArray);
-		
-		
+		 initCounter = 0;
+		 alpha = 0.02;
+		 round = 0;
+		 numOfAcceptance = 0;
+		 numOfChanges = 0;
+		 Lh = 0;
 		//Register Fog Agent in YEllow Pages
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
@@ -83,198 +97,204 @@ public class FogAgent extends Agent {
 					fe.printStackTrace();
 				}
 				//Perform the request
-				
-				myAgent.addBehaviour(new Optimize());
+				//Step 1: Gather initial schedules from all houses
+				ACLMessage request = new ACLMessage(ACLMessage.REQUEST);//RQST Message
+				for (int i = 0; i < houseAgents.length; i++){ //To all houses
+					request.addReceiver(houseAgents[i]);
+				}
+				request.setContent("initialSchedule"); //Asking for initial schedule
+				request.setConversationId("daily-consumption");
+				request.setReplyWith("Request" + System.currentTimeMillis());
+				myAgent.send(request); //Send messsage
+				myAgent.addBehaviour(new HearMessages());
 			}
 		});
 		
 	}
 	
 	
-	private class Optimize extends Behaviour {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		private int step = 1;
-		private MessageTemplate mt;
-		private MessageTemplate mt2;
-		private int repliesCnt = 0;
-		private double costLoad = 0;
+	private class HearMessages extends CyclicBehaviour {
+
+		@Override
+		public void action() {
+			// TODO Auto-generated method stub
+			ACLMessage msg = receive();
+			if (msg != null){
+				if (msg.getPerformative() == ACLMessage.INFORM){
+					
+					if (DAILY.equals(msg.getConversationId())) {
+						gatherInitSchedules(msg);
+					}
+					else if (PRICE.equals(msg.getConversationId())){
+						//TODO: Gather schedule and calculate new price (Game)
+						numOfChanges++;
+						gatherNewSchedule(msg);
+					}
+				}
+				else if (msg.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
+					numOfAcceptance++;
+					responseCounter++;
+					agentChecker();
+				}
+			}
+			else{
+				block();
+			}
+			
+		}
 		
-			@Override
-			public void action() {
-				
-				switch(step){
-				case 1: 
-					//Step 1: Gather initial schedules from all houses
-					ACLMessage request = new ACLMessage(ACLMessage.REQUEST);//RQST Message
-					for (int i = 0; i < houseAgents.length; i++){ //To all houses
-						request.addReceiver(houseAgents[i]);
-					}
-					
-					request.setContent("initialSchedule"); //Asking for initial schedule
-					request.setConversationId("daily-consumption");
-					request.setReplyWith("Request" + System.currentTimeMillis());
-					myAgent.send(request); //Send messsage
-					//Prepare template to get schedules
-					mt = MessageTemplate.and(MessageTemplate.MatchConversationId("daily-consumption"), MessageTemplate.MatchInReplyTo(request.getReplyWith()));
-					step = 2;
-					break;
-					//End of step 1
-				case 2:
-					//Step 2: receive all  schedules from house agents
-					ACLMessage reply = myAgent.receive(mt); //Receive schedule
-					if (reply != null){			//If message has content (yay!)
-						if (reply.getPerformative() == ACLMessage.INFORM){
-							String json = reply.getContent();
-							Gson gson = new Gson();
-							//cargaHora = pv.getHourlyLoadArray();
-							double [] casaLoad = gson.fromJson(json, double[].class);
-							for (int i = 0; i < 24; i++){
-								cargaHora[i] = cargaHora[i] + casaLoad[i];
-							
-							}
-							
-							
-							
-							
-						}		
-							repliesCnt++; //To check if everyone is here
-							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
-								pv.setHourlyLoadArray(cargaHora);
-								Function fu = new Function();
-								Lh = fu.getLh24(pv.getHourlyLoadArray());
-								System.out.println("carga");
-								double[]cargas = pv.getHourlyLoadArray();
-								
-								//alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
-								alpha = 0.02;
-								System.out.println("Initial Load is: " + Lh);
-								System.out.println("Alpha is: " + alpha);
-								pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
-								
-								step = 3; //End of step 2
-								
-
-							}
-							
-					}
-					else {
-						block(); //Wait 
-						
-					}
-					break;
-					
-				case 3:
-					// Step 4: send prices to house agents
-					ACLMessage response = new ACLMessage(ACLMessage.INFORM);//RQST Message
-					for (int i = 0; i < houseAgents.length; i++){ //To all houses
-						response.addReceiver(houseAgents[i]);
-					}
-					
-					Gson gson = new Gson();
-					String json = gson.toJson(pv.getPriceArray());
-					
-					response.setContent(json);
-					response.setConversationId("prices");
-					response.setReplyWith("Request" + System.currentTimeMillis());
-					myAgent.send(response);
-					//Prepare template to get schedules
-					mt2 = MessageTemplate.and(MessageTemplate.MatchConversationId("prices"), MessageTemplate.MatchInReplyTo(response.getReplyWith()));
-					//Prepare array
-					Arrays.fill(clearArray, 0);
-					pv.setHourlyLoadArray(clearArray);
-					repliesCnt = 0;
-
-					step = 4;
-					break;
-					//End of step 3
-				case 4: 
-						
-					int positive = 0;
-					int negative = 0;
-					
-					//Step 4: receive all  updated schedules from house agents
-					ACLMessage replyGame = myAgent.receive(mt2); //Receive schedule
-					if (replyGame != null){			//If message has content (yay!)
-						if (replyGame.getPerformative() == ACLMessage.INFORM){ //Someone has changed their schedule
-							Function fu = new Function();
-
-							positive++;
-							 json = replyGame.getContent();
-							 gson = new Gson();
-							cargaHora = pv.getHourlyLoadArray();
-							double [] casaLoad = gson.fromJson(json, double[].class);
-							for (int i = 0; i < 24; i++){
-								cargaHora[i] = cargaHora[i] + casaLoad[i];
-							
-							}
-							
-
-						}	else if (replyGame.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
-							negative++;
-						}
-							repliesCnt++; //To check if everyone is here
-					
-							if (repliesCnt >= houseAgents.length){ //If all agents have submitted their schedules
-								Function fu = new Function();
-								pv.setHourlyLoadArray(cargaHora);
-								Lh = fu.getLh24(pv.getHourlyLoadArray());
-								System.out.println("Daily load is " + Lh);
-								System.out.println("After: " + fu.getLh24(pv.getHourlyLoadArray()));
-
-								if (positive > 0 ) { //Someone changed their schedule
-									
-									round++;
-									System.out.println("Average price is: " + averagePrice(pv.getHourlyLoadArray()));
-									System.out.println("Round: " + round);	
-									//alpha = calculateAlpha(pv.getHourlyLoadArray(), Lh);
-									alpha = 0.02;
-									System.out.println("Alpha is: " + alpha);
-									pv.setPriceArray(calculateHourlyPrices(alpha, pv.getHourlyLoadArray()));
-									step = 3; //End of step 4, go back to previous step
-									
-								}else {
-								
-								System.out.println("End of game");
-								step = 5;
-								}
-
-							}
-							
-					}
-					else {
-						block(); //Wait 
-						
-					}
-					
+	}
+	
+	public void sendStatusOfEndGame(){
+		for (int i =0; i <houseAgents.length;i++){
+			
+		}
+	}
+	
+	public void gatherInitSchedules(ACLMessage msg){
+		
+		if (initCounter <= houseAgents.length ){ 
+			initCounter++;
+			String json = msg.getContent();
+			Gson gson = new Gson();
+			//cargaHora = pv.getHourlyLoadArray();
+			double [] casaLoad = gson.fromJson(json, double[].class);
+			for (int i = 0; i < 24; i++){
+				cargaHora[i] = cargaHora[i] + casaLoad[i];
+			}
+			
+			storeHousePreferences(casaLoad, msg.getSender().getLocalName()); //store House Preference
+			
+			if (initCounter == houseAgents.length){
+				//calculate price
+				calculateHourlyPrices(alpha, cargaHora);
+				for (double d: cargaHora){
+					Lh+=d;
 				}
-				
-				
-				
+				round++;
+				System.out.println("Round: " + round);
+				System.out.println("Initial Load is: " + Lh);
+				//send price to house agent
+				senderToNextAgent();
 				
 			}
+		}
+			
+	}
 
-			@Override
-			public boolean done() {
-				// TODO Auto-generated method stub
-				return (step == 5);
+	public void senderToNextAgent(){
+		System.out.println("Response aqui: " + responseCounter);
+		if (responseCounter < houseAgents.length ){	
+			sendPrice(houseAgents[responseCounter]);			
+		}
+		else{
+			System.out.println("Check");
+			agentChecker();
+		}
+	}
+	public void agentChecker(){
+		
+		if (numOfAcceptance == houseAgents.length && (numOfChanges == 0)){				
+			System.out.println("End of game");		
+			System.out.println("number of houses: " + houseAgents.length);
+			System.out.println("Number of acceptance: " + numOfAcceptance );
+			System.out.println("Number of changes: " + numOfChanges);
+			System.out.println("Number of Responses: " + responseCounter);
+			System.out.println("Current Load is: " + Lh);
+			double avgPrice = averagePrice(cargaHora);
+			System.out.println("Average price is: " + avgPrice );
+		} else if(numOfChanges > 0){
+			if(numOfChanges <= houseAgents.length && responseCounter == houseAgents.length){
+				round++;
+				System.out.println("number of houses: " + houseAgents.length);
+				System.out.println("Number of acceptance: " + numOfAcceptance );
+				System.out.println("Number of changes: " + numOfChanges);
+				System.out.println("Number of Responses: " + responseCounter);
+				System.out.println("Current Load is: " + Lh);
+				double avgPrice = averagePrice(cargaHora);
+				System.out.println("Average price is: " + avgPrice );
+				System.out.println("Round number: " + round) ;
+			numOfAcceptance = 0;
+			numOfChanges = 0;
+			responseCounter = 0;
+			senderToNextAgent();
+			System.out.println("Next");
+			}else{
+			//Still playing
+				senderToNextAgent();
 			}
-					
-				}
+		}	
+	}
+		
+		
+
+	public void  sendPrice(AID Agent){
+		ACLMessage message = new ACLMessage(ACLMessage.INFORM);//RQST Message
+		Gson gson = new Gson();
+		if(pv.getPriceArray()!= null){
+			String json = gson.toJson(pv.getPriceArray());
+			message.addReceiver(Agent);
+			message.setConversationId(PRICE);
+			message.setReplyWith("Request" + System.currentTimeMillis());
+			message.setContent(json);
+			send(message);
+		}
+	}
+	
+	public void storeHousePreferences(double[] houseLoad, String houseName){
+		preferences.put(houseName, houseLoad);
+	}
+	
+	public void storeHousesPreferenceAndUpdate(double[] houseLoad, String houseName){
+		//check if house has already submitted a preference
+			preferences.put(houseName, houseLoad);
+			calculateLoad(); //Recalculate Load and price
+	}
+	
+	public void calculateLoad(){
+		//double [] cargaHora = new double[24];
+		Arrays.fill(cargaHora, 0);
+		Lh = 0;
+		for (Map.Entry<String, double[]> entry:preferences.entrySet()){
+			double[] schedule = entry.getValue();
+			for (int i = 0; i < 23; i++){
+				cargaHora[i]+=schedule[i];
+				
+			}
+		}
+		for (double d: cargaHora){
+			Lh+=d;
+		}
+	//	alpha = calculateAlpha(Lh);
+		calculateHourlyPrices(alpha, cargaHora);
+		
+	}
+	
+	
+	
+	public void gatherNewSchedule(ACLMessage msg){
+		
+		responseCounter++;
+		String json = msg.getContent();
+		Gson gson = new Gson();
+		double [] casaLoad = gson.fromJson(json, double[].class);
+		storeHousesPreferenceAndUpdate(casaLoad, msg.getSender().getLocalName());
+		agentChecker();
+	}
 	
 	
 	
 	
-	public double[] calculateHourlyPrices( double alpha, double[] hourlyConsumption) {
+	public void calculateHourlyPrices( double alpha, double[] hourlyLoad) {
 		double[] hourlyPrices = new double[24];
 		//alpha*Lh*Log10(lh+1)
 		//double alpha = 0.2;
 		for (int i = 0; i< 24; i++){
-			hourlyPrices[i] = hourlyConsumption[i] * alpha * Math.log10(hourlyConsumption[i] + 1);
+			hourlyPrices[i] = hourlyLoad[i] * alpha * Math.log10(hourlyLoad[i] + 1);
 		}
-		return hourlyPrices;
+		
+		pv.setPriceArray(hourlyPrices);
+		
 		
 	}
 	
@@ -290,7 +310,9 @@ public class FogAgent extends Agent {
 
 	}
 	
-	public double calculateAlpha(double[] hourlyLoad, double dailyLoad){
+	
+	
+	public double calculateAlpha(double dailyLoad){
 		double p = 2.02;
 		double alpha = 0;
 		
@@ -301,4 +323,13 @@ public class FogAgent extends Agent {
 		
 	}
 	
+	
+	
+	
+	
+
+	
 }
+	
+	
+

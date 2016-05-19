@@ -29,7 +29,10 @@ public class HouseAgent extends Agent {
 	private double finalCost;
 	private int shifteable;
 	private int nonShifteable;
+	double initialLoad;
 	private double budget;
+	 public final static String DAILY = "daily-consumption";
+	 public final static String PRICE = "prices";
 	protected void setup() {
 		
 		
@@ -77,7 +80,27 @@ public class HouseAgent extends Agent {
 		
 	}
 
-	
+	private class HearForMessages extends CyclicBehaviour {
+
+		@Override
+		public void action() {
+			// TODO Auto-generated method stub
+			ACLMessage msg = receive();
+			if (msg != null){
+				if (msg.getPerformative() == ACLMessage.REQUEST){
+					if (DAILY.equals(msg.getConversationId())) {
+						
+					}
+					
+				}
+			}
+			else{
+				block();
+			}
+		}
+		
+		
+	}
 	
 	
 	private class dailyConsumptionSchedule extends CyclicBehaviour {
@@ -101,8 +124,11 @@ public class HouseAgent extends Agent {
 				   //Get consumption  for this house
 					Function fu = new Function();
 					double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
-					
+					for (double d: dailyConsumption){
+						initialLoad+=d;
+					}
 					reply.setPerformative(ACLMessage.INFORM);
+					reply.setConversationId("daily-consumption");
 					Gson gson = new Gson();
 					String json = gson.toJson(dailyConsumption); //JSONfy
 					reply.setContent(json);
@@ -124,6 +150,10 @@ public class HouseAgent extends Agent {
 		
 		
 	}
+	
+	
+	
+	
 	
 	private class optimizeHouseSchedule extends CyclicBehaviour{
 
@@ -156,18 +186,15 @@ public class HouseAgent extends Agent {
 						 
 						initialCost = fu.getTotalConsumption(casa.getAppliances());
 						
-						
-						myLogger.log(Logger.INFO, "For " + getAID().getName() + " Budget : " + casa.getBudget()  );
-						myLogger.log(Logger.INFO, "For " + getAID().getName() + " shift : " + shiftBudget  );
-						myLogger.log(Logger.INFO, "For " + getAID().getName() + " nonShift : " + nonShiftBudget  );
-						myLogger.log(Logger.INFO, "For " + getAID().getName() + " nonShift Cons : " + shiftConsumption  );
+						System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
+						myLogger.log(Logger.INFO, " For " + getAID().getName() + " nonShift Cons : " + shiftConsumption  );
 
 
 						if (shiftBudget <= 0){
 							myLogger.log(Logger.INFO, "Over budget for non shift");
 							 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 							 finalCost = fu.getTotalConsumption(casa.getAppliances());
-							 System.out.println("For " + getAID().getName() + "Initial consumption was: " + initialCost + " Final consumption was: " + finalCost );
+							 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialCost + " Final cost is: " + finalCost );
 							 myAgent.send(reply);
 							 block();
 							
@@ -183,11 +210,10 @@ public class HouseAgent extends Agent {
 								String json = gson.toJson(dailyConsumption); //JSONfy
 								reply.setContent(json);
 								reply.setConversationId("prices");
+								myAgent.send(reply);
+								 block();
 						}
-						
-						
-						 
-					 
+											 
 				 } else{ //N pass
 						Function fu = new Function();
 
@@ -218,7 +244,7 @@ public class HouseAgent extends Agent {
 							}
 							
 						//Recalculate energy needs	
-						   //Get consumption for the next hour for this house
+						//Get consumption for the next hour for this house
 							
 							double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
 							
@@ -233,14 +259,19 @@ public class HouseAgent extends Agent {
 					 }else{ //If prices are the same, then inform of no change
 						 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 						  fu = new Function();
-						  int counter = 0;
+						  int on = 0;
+						  int off = 0;
 							 for (Appliance app: casa.getAppliances()){
 								 if (app.isOn() == false){
-									 counter++;
+									 off++;
+								 }
+								 else{
+									 on++;
 								 }
 							 }	 
 						 finalCost = fu.getTotalConsumption(casa.getAppliances());
-						 System.out.println("For " + getAID().getName() + "Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " and app of is: " + counter + " and apps on are: " + (8 - counter));
+						 
+						 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + casa.getHouseLoad());
 						 
 						 
 					 }
