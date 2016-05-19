@@ -183,7 +183,6 @@ public class FogAgent extends Agent {
 	}
 
 	public void senderToNextAgent(){
-		System.out.println("Response aqui: " + responseCounter);
 		if (responseCounter < houseAgents.length ){	
 			sendPrice(houseAgents[responseCounter]);			
 		}
@@ -201,7 +200,7 @@ public class FogAgent extends Agent {
 			System.out.println("Number of changes: " + numOfChanges);
 			System.out.println("Number of Responses: " + responseCounter);
 			System.out.println("Current Load is: " + Lh);
-			double avgPrice = averagePrice(cargaHora);
+			double avgPrice = averagePrice(pv.getPriceArray());
 			System.out.println("Average price is: " + avgPrice );
 		} else if(numOfChanges > 0){
 			if(numOfChanges <= houseAgents.length && responseCounter == houseAgents.length){
@@ -211,7 +210,7 @@ public class FogAgent extends Agent {
 				System.out.println("Number of changes: " + numOfChanges);
 				System.out.println("Number of Responses: " + responseCounter);
 				System.out.println("Current Load is: " + Lh);
-				double avgPrice = averagePrice(cargaHora);
+				double avgPrice = averagePrice(pv.getPriceArray());
 				System.out.println("Average price is: " + avgPrice );
 				System.out.println("Round number: " + round) ;
 			numOfAcceptance = 0;
@@ -291,6 +290,7 @@ public class FogAgent extends Agent {
 		//double alpha = 0.2;
 		for (int i = 0; i< 24; i++){
 			hourlyPrices[i] = hourlyLoad[i] * alpha * Math.log10(hourlyLoad[i] + 1);
+			
 		}
 		
 		pv.setPriceArray(hourlyPrices);

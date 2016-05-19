@@ -30,6 +30,7 @@ public class HouseAgent extends Agent {
 	private int shifteable;
 	private int nonShifteable;
 	double initialLoad;
+	double finalLoad;
 	private double budget;
 	 public final static String DAILY = "daily-consumption";
 	 public final static String PRICE = "prices";
@@ -123,10 +124,8 @@ public class HouseAgent extends Agent {
 
 				   //Get consumption  for this house
 					Function fu = new Function();
-					double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
-					for (double d: dailyConsumption){
-						initialLoad+=d;
-					}
+					double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
+					initialLoad = fu.calculateHouseLoad(casa.getAppliances());
 					reply.setPerformative(ACLMessage.INFORM);
 					reply.setConversationId("daily-consumption");
 					Gson gson = new Gson();
@@ -180,11 +179,11 @@ public class HouseAgent extends Agent {
 						//First, calculate prices!
 						fu.calculateHourlyMoneyConsumption(casa.getAppliances(), hourlyPrices);
 						
-					 	double nonShiftBudget = fu.CalculateNonShiftBudget(casa.getAppliances());
+					 	double nonShiftBudget = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "shifteable");
 						double shiftBudget = casa.getBudget() - nonShiftBudget;
-						double shiftConsumption = fu.getShiftConsumption(casa.getAppliances());
+						double shiftConsumption = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "nonShifteable");
 						 
-						initialCost = fu.getTotalConsumption(casa.getAppliances());
+						initialCost = nonShiftBudget + shiftConsumption;
 						
 						System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
 						myLogger.log(Logger.INFO, " For " + getAID().getName() + " nonShift Cons : " + shiftConsumption  );
@@ -204,7 +203,7 @@ public class HouseAgent extends Agent {
 							//Recalculate energy needs	
 							   //Get consumption for the next hour for this house
 								
-								double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
+								double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
 								reply.setPerformative(ACLMessage.INFORM);
 								gson = new Gson();
 								String json = gson.toJson(dailyConsumption); //JSONfy
@@ -233,45 +232,48 @@ public class HouseAgent extends Agent {
 						 			System.out.println(app.getName() + " of " + getAID().getName() + " is off");
 						 		}
 						 	}
-						 	double nonShiftBudget = fu.CalculateNonShiftBudget(casa.getAppliances());
+						 	double nonShiftBudget = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "shifteable");
 							double shiftBudget = casa.getBudget() - nonShiftBudget;
 							
 							if (shiftBudget <= 0){
 								myLogger.log(Logger.INFO, "Over budget for non shift");
+								double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
+								reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+								gson = new Gson();
+								String json = gson.toJson(dailyConsumption); //JSONfy
+								reply.setContent(json);
+								reply.setConversationId("prices");
+								//Update local
+								lastPriceArray = hourlyPrices;
 							}
 							else{
 								fu.IWantConvenience(casa.getAppliances(), hourlyPrices, shiftBudget);
+								//Recalculate energy needs	
+								//Get consumption for the next hour for this house
+									
+									double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
+
+									
+									reply.setPerformative(ACLMessage.INFORM);
+									gson = new Gson();
+									String json = gson.toJson(dailyConsumption); //JSONfy
+									reply.setContent(json);
+									reply.setConversationId("prices");
+									//Update local
+									lastPriceArray = hourlyPrices;
 							}
 							
-						//Recalculate energy needs	
-						//Get consumption for the next hour for this house
-							
-							double[] dailyConsumption = fu.getHourlyHouseConsumption(casa);
-							
-							reply.setPerformative(ACLMessage.INFORM);
-							gson = new Gson();
-							String json = gson.toJson(dailyConsumption); //JSONfy
-							reply.setContent(json);
-							reply.setConversationId("prices");
-							//Update local
-							lastPriceArray = hourlyPrices;
+						
 							
 					 }else{ //If prices are the same, then inform of no change
 						 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 						  fu = new Function();
 						  int on = 0;
 						  int off = 0;
-							 for (Appliance app: casa.getAppliances()){
-								 if (app.isOn() == false){
-									 off++;
-								 }
-								 else{
-									 on++;
-								 }
-							 }	 
-						 finalCost = fu.getTotalConsumption(casa.getAppliances());
-						 
-						 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + casa.getHouseLoad());
+							 
+						 finalCost = fu.getTotalConsumption(casa.getAppliances()); //$$
+						 finalLoad = fu.calculateHouseLoad(casa.getAppliances());
+						 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
 						 
 						 
 					 }
@@ -294,46 +296,6 @@ public class HouseAgent extends Agent {
 			}
 			
 		}
-		
-	}
-	private class dailyConsumptionSchedule2 extends CyclicBehaviour {
-
-		@Override
-		public void action() {
-			MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REQUEST), MessageTemplate.MatchConversationId("daily-consumption"));
-			ACLMessage msg = myAgent.receive(mt);
-			
-			if (msg != null){
-				
-				//Message received, process it.
-				String content = msg.getContent();
-				ACLMessage reply  = msg.createReply();
-
-			   if ((content!= null) && (content.indexOf("dailySchedule") != -1)){
-				   
-				
-				   //Get consumption for the next hour for this house
-					Function fu = new Function();
-					double dailyConsumption = fu.dailyHouseConsumption(casa);
-					reply.setPerformative(ACLMessage.INFORM);
-					reply.setContent(String.valueOf(dailyConsumption));
-				} 
-				else {
-					//MEssage is incorrect
-					reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-					reply.setContent("Content not understood");
-				}
-				
-				myAgent.send(reply);
-			}
-			
-			else {
-				block();
-			}
-			
-		}
-		
-		
 		
 	}
 	

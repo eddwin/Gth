@@ -14,20 +14,22 @@ public class Function {
 		
 	}
 	
-	public double houseConsumption(House home){
-		Billing bill = new Billing();
-		bill.billingFunction(home);	
-		return bill.getHourlyBill();
-		
+
+	public double[] getHourlyConsumption(List<Appliance>appliances){
+		double [] hourlyLoad = new double[24];
+		Arrays.fill(hourlyLoad, 0);
+		for (Appliance a:appliances ){
+			if (a.isOn()){
+				int[] consumptionSchedule = a.getConsumptionSchedule();
+				double kwh = a.getKwh();
+				for (int i =0; i<24; i++){
+					hourlyLoad[i]+=  consumptionSchedule[i]*kwh;
+				}
+			}
+			
+		}
+		return hourlyLoad;
 	}
-	
-	public double dailyHouseConsumption(House home) {
-		Billing bill = new Billing();
-		bill.getDailyConsumption(home);	
-		return bill.getDailyConsumption();
-	}
-	
-	
 	
 	public double[] getHourlyHouseConsumption (House home){
 		double [] hourlyLoad = new double[24];
@@ -80,10 +82,26 @@ public class Function {
 				int[] newSchedule = new int[24];
 				for (int i = importance; i > 0; i--){
 					//Allocate resource for highest appliance
-					newSchedule = BestAllocate(order.get(Integer.toString(i)),energyPrices, order.get(Integer.toString(i)).getOperationalHours());
+					newSchedule = BestAllocate(energyPrices, order.get(Integer.toString(i)).getOperationalHours(), 0, 20000.0, order.get(Integer.toString(i)).getConsumptionSchedule());
+					int ctr1 = 0;
+					int ctr2 = 0;
+					
+					for (int d:newSchedule ){
+						if (d == 1){
+							ctr1++;
+						}
+					}for (int d:order.get(Integer.toString(i)).getConsumptionSchedule() ){
+						if (d == 1){
+							ctr2++;
+						}
+					}
+					if (ctr1 != ctr2){
+						System.out.println("Is different");
+					}
+					
 					//Calculate consumption
 					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)).getKwh(), energyPrices, newSchedule);
-
+					
 					//Check if the added cost of this appliance overuns the budget for this house
 					if ((dailyCost + totalConsumption) <= budget){
 						//If it does, then it can be afforded to be on during the day
@@ -114,57 +132,54 @@ public class Function {
 		return dailyCost;
 	}
 	
-	public int [] BestAllocate (Appliance app, double[] energyPrices, int hours ){
+	public int [] BestAllocate (double[] energyPrices, int hours, int index, double bestCost, int[] bestAllocate ){
 		int [] bestResponse = new int[24];
 		double [] bestPeriod = new double[hours];
-		int [] bestAllocate = new int[24];
-		double bestCost = 200000.0;
 		double cost = 0;
-		if (hours == 1) {
-			//Simplex
-			double small = energyPrices[0];
-			int index = 0;
-			for (int i = 0; i < energyPrices.length; i++){
-				if (energyPrices[i] < small){
-					small = energyPrices[i];
-					index = i;
-					
-				}
-			}
-			Arrays.fill(bestAllocate, 0);
-			bestAllocate[index] = 1;
-			
-			
-			
-		}else if (hours > 1){
-			//Allocate 
-			for (int i = 0; i < 24 - hours; i++ ){
-				Arrays.fill(bestPeriod, 0);
-				for (int j = 0; j < hours ; j++){
-					bestPeriod[j] =  energyPrices[i + j];
-					bestResponse[j] = i+j;
-				}
-				for (double k:bestPeriod ){
-					cost += k;
-				}
-				if (cost < bestCost  ){
-					bestCost = cost;
-					for (int k = 0; k < bestResponse.length; k++ ){
-						if (bestResponse[k] > 0){
-							bestAllocate[k] = 1;
-						}
-						else{
-							bestAllocate[k] = 0;
-						}
+		if (index < 24-hours){
+			if (hours == 1) {
+				//Simplex
+				double small = energyPrices[0];
+				for (int i = 0; i < energyPrices.length; i++){
+					if (energyPrices[i] < small){
+						small = energyPrices[i];
+						index = i;		
 					}
-					
 				}
+				Arrays.fill(bestAllocate, 0);
+				bestAllocate[index] = 1;		
+			}else if (hours > 1){
+				//Allocate 
+				for (int i = index; i < 24 - hours; i++ ){
+					Arrays.fill(bestPeriod, 0);
+					for (int j = 0; j < hours ; j++){
+						bestPeriod[j] =  energyPrices[i + j];
+						bestResponse[j] = 1;
+					}
+					for (double k:bestPeriod ){
+						cost += k;
+					}
+					if (cost < bestCost  ){
+						bestCost = cost;
+						for (int k = 0; k < 23; k++ ){
+							if (bestResponse[k] > 0){
+								bestAllocate[k] = 1;
+							}
+							else{
+								bestAllocate[k] = 0;
+							}
+						}
+						
+					}
+				}		
+			return BestAllocate(energyPrices, hours, index+1, bestCost, bestAllocate);
 			}
-			
-			
 		}
-		
 		return bestAllocate;
+		
+		
+		
+		
 	}
 
 	
@@ -238,6 +253,7 @@ public class Function {
 		for(int i =0; i < allAppliances.size(); i++){
 			dailyCost = calcuateDailyCost(allAppliances.get(i).getKwh(), hourlyPrices, allAppliances.get(i).getConsumptionSchedule());
 			allAppliances.get(i).setDailyCost(dailyCost);
+			System.out.println(dailyCost);
 		}	
 		
 	}
@@ -253,6 +269,36 @@ public class Function {
 		
 		
 	}
+	public double calculateHouseLoad(List<Appliance> allAppliances){
+		 	double total = 0;
+		 	double sub = 0;
+		 	for (Appliance a: allAppliances){
+				if (a.isOn()){
+	 				double kwh = a.getKwh();
+					int[] schedule = a.getConsumptionSchedule();
+	 				for (int i =0; i < 24; i++){
+	 					sub = kwh * schedule[i];
+	 					total+=sub;
+	 				}	
+	 			}	 			
+		 	}
+		 		
+		 	return total;
+		 }
 	
-
+	public double getTypeOfApplianceConsumption(List<Appliance> allAppliances, String type){
+		double cost = 0;
+		List<Appliance> appliances = new ArrayList<Appliance>();
+		if (type == "shifteable"){
+			appliances = getShifteableDevices(allAppliances);
+		}
+		else if(type == "nonShifteable"){
+			appliances = getNonShifteableDevices(allAppliances);
+		}
+		for(Appliance a: appliances){
+			cost += a.getDailyCost();
+		}
+		
+		return cost;
+	}
 }
