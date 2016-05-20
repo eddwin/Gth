@@ -61,9 +61,9 @@ public class Function {
 		
 	}
 	
-	public void IWantConvenience(List<Appliance>  appliances, double[] energyPrices, double budget){
+	public String IWantConvenience(List<Appliance>  appliances, double[] energyPrices, double budget, int currentNumberOff){
 		// In here, weight is the most important thing
-		 
+		 String result;
 				List<Appliance> shifteable = new ArrayList<Appliance>();
 				shifteable.addAll(getShifteableDevices(appliances));
 				Map<String, Appliance> order = new HashMap<String, Appliance>();
@@ -76,48 +76,71 @@ public class Function {
 				}
 				
 				//Get max weight
-				
+				int offCtr = 0;
 				int importance = order.size();
 				double totalConsumption = 0;
 				int[] newSchedule = new int[24];
 				for (int i = importance; i > 0; i--){
-					//Allocate resource for highest appliance
 					newSchedule = BestAllocate(energyPrices, order.get(Integer.toString(i)).getOperationalHours(), 0, 20000.0, order.get(Integer.toString(i)).getConsumptionSchedule());
-					int ctr1 = 0;
-					int ctr2 = 0;
-					
-					for (int d:newSchedule ){
-						if (d == 1){
-							ctr1++;
-						}
-					}for (int d:order.get(Integer.toString(i)).getConsumptionSchedule() ){
-						if (d == 1){
-							ctr2++;
-						}
-					}
-					if (ctr1 != ctr2){
-						System.out.println("Is different");
-					}
-					
 					//Calculate consumption
 					double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)).getKwh(), energyPrices, newSchedule);
-					
-					//Check if the added cost of this appliance overuns the budget for this house
-					if ((dailyCost + totalConsumption) <= budget){
-						//If it does, then it can be afforded to be on during the day
-						order.get(Integer.toString(i)).setConsumptionSchedule(newSchedule);
-						//Turn it on
-						order.get(Integer.toString(i)).setOn(true);
-						//Update new consumption total for this round
-						order.get(Integer.toString(i)).setDailyCost(dailyCost);
-						//Update consumption total for this round
-						totalConsumption += dailyCost;
+					if ((dailyCost + totalConsumption) >= budget){
+						//Would have to be turned off
+						offCtr++;				
 					}
-					else{
-						//It can't be afforded, turn it off
-						order.get(Integer.toString(i)).setOn(false); //Turn off							
+					
+				}
+				if (offCtr >= currentNumberOff){
+					result = "no-change";
+				}
+				else{
+					result = "change";
+					for (int i = importance; i > 0; i--){
+						//Allocate resource for highest appliance
+						newSchedule = BestAllocate(energyPrices, order.get(Integer.toString(i)).getOperationalHours(), 0, 20000.0, order.get(Integer.toString(i)).getConsumptionSchedule());
+						int ctr1 = 0;
+						int ctr2 = 0;
+						
+						for (int d:newSchedule ){
+							if (d == 1){
+								ctr1++;
+							}
+						}for (int d:order.get(Integer.toString(i)).getConsumptionSchedule() ){
+							if (d == 1){
+								ctr2++;
+							}
+						}
+						if (ctr1 != ctr2){
+							System.out.println("Is different");
+						}
+						
+						//Calculate consumption
+						double dailyCost = calcuateDailyCost(order.get(Integer.toString(i)).getKwh(), energyPrices, newSchedule);
+						
+						//Check if the added cost of this appliance overuns the budget for this house
+						System.out.println("daily cost is " + dailyCost + " total consumption is " +totalConsumption + " budget is " + budget);
+						if ((dailyCost + totalConsumption) <= budget){
+							//If it does, then it can be afforded to be on during the day
+							order.get(Integer.toString(i)).setConsumptionSchedule(newSchedule);
+							//Turn it on
+							order.get(Integer.toString(i)).setOn(true);
+							//Update new consumption total for this round
+							order.get(Integer.toString(i)).setDailyCost(dailyCost);
+							//Update consumption total for this round
+							totalConsumption += dailyCost;
+						}
+						else{
+							//It can't be afforded, turn it off
+							order.get(Integer.toString(i)).setOn(false); //Turn off		
+							System.out.println("Turned off");
+							
+							
+						}
+											
 					}
 				}
+				
+				return result;
 	}	
 	
 	
@@ -301,4 +324,124 @@ public class Function {
 		
 		return cost;
 	}
+	///////
+	public double[] calculateHourlyConsumption(House casa){
+		List<Appliance> appliances = new ArrayList<Appliance>();
+		appliances = casa.getAppliances();
+		double[]consumption = new double[24];
+		for (Appliance a: appliances){
+			if (a.isOn()){
+				int[]schedule = a.getConsumptionSchedule();
+				double kwh = a.getKwh();		
+				for (int i = 0; i < 24; i++){
+					consumption[i]+=schedule[i]*kwh;
+					
+				}
+			}
+			
+			
+		}
+		return consumption;
+	}
+	
+	public double calculateHouseLoad(double[] houseConsumption){
+		double load = 0;
+		for (double d:houseConsumption){
+			load+=d;
+		}
+		
+		return load;
+		
+	}
+	
+	public void calculateCostOfAllAppliances(House casa, double[]costPerHour){
+		/*
+		 * Solo para todos
+		 */
+		List<Appliance> appliances = new ArrayList<Appliance>();
+		appliances = casa.getAppliances();
+		for (Appliance a:appliances){
+			double overalCost = 0;
+			double khw = a.getKwh();
+			int[] schedule = a.getConsumptionSchedule();
+			for (int i = 0; i < 24; i++){
+				  double result = schedule[i]*costPerHour[i]*khw;
+				  overalCost+=result;
+			}
+			a.setDailyCost(overalCost);	
+		}			
+	}
+	
+	public void calculateCostOfOnAppliances(House casa, double[]costPerHour){
+		/*
+		 * Solo para encendidos
+		 */
+		List<Appliance> appliances = new ArrayList<Appliance>();
+		appliances = casa.getAppliances();
+		for (Appliance a:appliances){
+			if (a.isOn()){
+				double overalCost = 0;
+				double khw = a.getKwh();
+				int[] schedule = a.getConsumptionSchedule();
+				for (int i = 0; i < 24; i++){
+					  double result = schedule[i]*costPerHour[i]*khw;
+					  overalCost+=result;
+				}
+				a.setDailyCost(overalCost);
+			}
+			else{
+				a.setDailyCost(0);
+			}
+		}
+			
+	}
+	
+	public double calculateOverallCost(House casa){
+		List<Appliance> appliances = new ArrayList<Appliance>();
+		appliances = casa.getAppliances();
+		double overalCost = 0;
+		for (Appliance a:appliances){
+			if (a.isOn()){
+				overalCost+=a.getDailyCost();
+				System.out.println(a.getName() + " costs " + a.getDailyCost());
+			}
+		//	System.out.println(overalCost);
+		}	
+		return overalCost;
+	}
+	
+	public double getCostOfAppByCategory(List<Appliance> appliances, String type){
+		List<Appliance> catAppliances = new ArrayList<Appliance>();
+		double cost = 0;
+		if (type == "shifteable"){
+			catAppliances = getShifteableDevices(appliances);
+		}
+		else if (type == "nonShifteable"){
+			catAppliances = getNonShifteableDevices(appliances);
+		}
+		for (Appliance a:catAppliances){
+			cost += a.getDailyCost();
+		}	
+		return cost;
+	}
+	
+	public int countOffAppliances(List<Appliance> appliances){
+		int ctr = 0 ;
+		for (Appliance a:appliances){
+			if (a.isOn()== false){
+				ctr++;
+			}
+		}
+		return ctr;
+	}
+	
+	public void turnOffAllShifteables(List<Appliance> appliances){
+		List<Appliance> catAppliances = new ArrayList<Appliance>();
+		catAppliances = getShifteableDevices(appliances);
+		for (Appliance a:appliances){
+			a.setOn(false);
+		}
+	}
+	
+	
 }

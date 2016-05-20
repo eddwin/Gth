@@ -222,7 +222,11 @@ public class FogAgent extends Agent {
 			//Still playing
 				senderToNextAgent();
 			}
-		}	
+		}
+		else{
+			//Still playing
+			senderToNextAgent();
+		}
 	}
 		
 		
@@ -264,7 +268,7 @@ public class FogAgent extends Agent {
 		for (double d: cargaHora){
 			Lh+=d;
 		}
-	//	alpha = calculateAlpha(Lh);
+	   // alpha = calculateAlpha(Lh);
 		calculateHourlyPrices(alpha, cargaHora);
 		
 	}
