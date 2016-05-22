@@ -19,11 +19,11 @@ public class TheCreator extends Agent {
 		try{
 			//Get container
 			ContainerController container = (ContainerController) getContainerController();
-			for ( int i = 0; i < 1; i++){
+			for ( int i = 0; i < 30; i++){
 				//randomBudget = random.nextInt(310);
-				mArgs[1] = 30.0;
-				mArgs[2] = 6;
-				mArgs[3] = 6;
+				mArgs[1] = randomBudget();
+				mArgs[2] = randomNumOfShifteable();
+				mArgs[3] = randomNumOfNonShifteable();
 				a1 = container.createNewAgent("house"+i,"com.agents.house.research.HouseAgent", mArgs);
 				a1.start();
 			}
@@ -33,8 +33,8 @@ public class TheCreator extends Agent {
 	}
 	
 	public double randomBudget(){
-		int min = 100;
-		int max = 400;
+		int min = 50;
+		int max = 200;
 		Random r = new Random();
 		int i1 = r.nextInt(max - min + 1) + min;
 		return (double) i1;

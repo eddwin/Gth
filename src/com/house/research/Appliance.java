@@ -6,11 +6,21 @@ public class Appliance {
 	int[] consumptionSchedule;
 	double[] energyToConsume;
 	String name;
+	
 	int weight;
 	boolean on;
 	double[] costPerHour;
 	double dailyCost;
+	
 
+	double dailyEnergy;
+
+	public double getDailyEnergy() {
+		return dailyEnergy;
+	}
+	public void setDailyEnergy(double dailyEnergy) {
+		this.dailyEnergy = dailyEnergy;
+	}
 	
 	public double getDailyCost() {
 		return dailyCost;

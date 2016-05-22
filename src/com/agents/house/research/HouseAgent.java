@@ -25,12 +25,14 @@ public class HouseAgent extends Agent {
 	private House casa;
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
 	private double[] lastPriceArray;
-	private double initialCost;
+	private double initialVirginCost;
+	private double initialAlgorithmCost;
 	private double finalCost;
 	private int shifteable;
 	private int nonShifteable;
 	double initialLoad;
 	double finalLoad;
+	double lastCost;
 	private double budget;
 	 public final static String DAILY = "daily-consumption";
 	 public final static String PRICE = "prices";
@@ -48,7 +50,7 @@ public class HouseAgent extends Agent {
 		}
 		//create a house and its appliances
 				casa = new House(shifteable, nonShifteable);
-				initialCost = 0;
+				initialVirginCost = 0;
 				finalCost = 0;
 				casa.setBudget(budget);
 				
@@ -99,6 +101,9 @@ public class HouseAgent extends Agent {
 						//OPTIMIZE
 						optimizeSchedule(msg);
 					}
+				}else if (msg.getPerformative()==ACLMessage.AGREE){
+					//TODO final messages
+					showFinalTally(msg);
 				}
 			}
 			else{
@@ -108,16 +113,45 @@ public class HouseAgent extends Agent {
 		
 		
 	}
+	
+public void showFinalTally(ACLMessage msg){
+	String content = msg.getContent();
+	Gson gson = new Gson();
+	Function fu = new Function();
+	double [] hourlyPrices = gson.fromJson(content, double[].class);
+	fu.calculateCostOfAllAppliances(casa, hourlyPrices);
+	double[] consumptionSchedule = fu.calculateHourlyLoad(casa);
+	finalLoad = fu.calculateHouseLoad(consumptionSchedule);
+	finalCost = fu.calculateOverallCost(casa);
+	double savings =  initialAlgorithmCost - finalCost;
+	int appsOff = fu.countOffAppliances(casa.getAppliances());
+
+	System.out.println("For: " + getAID().getLocalName());
+	System.out.println("Initial Load was: " + initialLoad + " Final Load: " + finalLoad );
+	System.out.println("Costo without preferences: " + initialVirginCost + " Final Cost: " + finalCost );
+	System.out.println("Initial  Cost: " + initialVirginCost + " Final Cost: " + finalCost );
+	System.out.println("Savings were: " +  savings);
+	System.out.println("Apps off were: " + appsOff);
+	//TODO: happiness index
+
+}
 
 public void sendInitialSchedule(ACLMessage msg){
 	String content = msg.getContent();
+	
 	ACLMessage reply = msg.createReply();
 	if (content != null){
 		//Calculate consumption for this house
 		Function fu = new Function();
-		double[]consumptionSchedule = fu.calculateHourlyConsumption(casa);
+		double[]consumptionSchedule = fu.calculateHourlyLoad(casa);
 		 initialLoad = fu.calculateHouseLoad(consumptionSchedule);
-		System.out.println(getAID().getLocalName() + " reported " + initialLoad);
+		 double shiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "shifteable");
+		 double nonShiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "nonShifteable");
+		 System.out.println("Initial shiftLoad: " +shiftLoad );
+		 System.out.println("Initial nonShiftLoad " + nonShiftLoad);
+		 fu.calculateApplianceConsumption(casa.getAppliances());
+		 double checkInitLoad = fu.calculateHoraLoad(casa.getAppliances());
+		System.out.println(getAID().getLocalName() + " reported " + initialLoad + " checker " + checkInitLoad);
 		//Prepare message
 		reply.setPerformative(ACLMessage.INFORM);
 		reply.setConversationId(DAILY);
@@ -127,7 +161,6 @@ public void sendInitialSchedule(ACLMessage msg){
 		send(reply);
 	}
 }
-
 public void optimizeSchedule(ACLMessage msg){
 	//get content
 	String content = msg.getContent();
@@ -135,9 +168,14 @@ public void optimizeSchedule(ACLMessage msg){
 	if (content != null){
 		//get hourly prices
 		 Gson gson = new Gson();
-		 double [] hourlyPrices = gson.fromJson(content, double[].class);
+		 double [] foreignLoad = gson.fromJson(content, double[].class);
 		 Function fu = new Function();
+		 double alpha = foreignLoad[24];
+		 double[]localLoad = fu.calculateHourlyLoad(casa);
+		 //Reconstruct
+		 double [] hourlyPrices = fu.projectHourlyPrices(foreignLoad, localLoad, alpha);
 		 
+		 String result;
 		 if (lastPriceArray == null){			 //first pass 
 			 lastPriceArray = hourlyPrices;
 			 //Calculate each appliance cost
@@ -147,37 +185,223 @@ public void optimizeSchedule(ACLMessage msg){
 			 double shiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
 			 double nonShiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
 			 double availableBudget = casa.getBudget() -nonShiftBudget;
-			 System.out.println("shift " + shiftBudget + " nonShift" + nonShiftBudget);
-			 initialCost = fu.calculateOverallCost(casa);		 
-
+			 initialVirginCost = fu.calculateOverallCost(casa);	
+			 double shiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "shifteable");
+			 double nonShiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "nonShifteable");
+			 System.out.println("Middle shiftLoad: " +shiftLoad );
+			 System.out.println("Middle nonShiftLoad " + nonShiftLoad);
+			
 			 System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
+			 System.out.println("For " + getAID().getLocalName() + " Available budget is " +availableBudget);
 			 if (availableBudget <= 0){
+				 	 String json = gson.toJson(localLoad);
 					 myLogger.log(Logger.INFO, "Over budget for non shift");
 					 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					 System.out.println("sent acceptance");
+					 fu.turnOffAllShiftAppliances(casa.getAppliances());
+					 finalCost = fu.calculateOverallCost(casa);
+					 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialVirginCost + " Final cost is: " + finalCost );
+					 send(reply);		
+			 }
+			 else{
+				 	//it can be afforded
+				 	//Turn off shifteables for first pass
+				 		fu.turnOffAllShifteables(casa.getAppliances());
+				 
+				 	fu.IWantConvenience(casa.getAppliances(), foreignLoad, localLoad, availableBudget, alpha);
+					
+						int offApp = fu.countOffAppliances(casa.getAppliances());
+						//Recalculate energy needs	
+					 	//Get consumption schedule for the next hour for this house
+						localLoad = fu.calculateHourlyLoad(casa);
+						reply.setPerformative(ACLMessage.INFORM);
+						gson = new Gson();
+						lastCost = fu.calculateOverallCost(casa);
+						initialAlgorithmCost = lastCost;
+						String json = gson.toJson(localLoad); //JSONfy
+						reply.setContent(json);
+						System.out.println("Load of house is: " + fu.calculateHouseLoad(localLoad) );
+						System.out.println(getAID().getLocalName() + " turned off " + offApp + " appliances in this round");
+						reply.setConversationId("prices");
+						send(reply);
+					
+				 	
+				 	
+				 	
+			 } //end of checking game for the first round
+			 
+		 }
+		 else{ //N pass
+			 hourlyPrices = fu.projectHourlyPrices(foreignLoad, localLoad, alpha);
+			 //check if prices are the same
+			 boolean flag = false;
+			 for (int i=0; i< 24; i++){
+				 if (lastPriceArray[i] != hourlyPrices[i]){
+					 flag = true;
+				 }
+			 }
+			 
+			 if (flag){//price has changed
+				 //Rpoject changes
+				double newCost= fu.estimateNewCost(casa.getAppliances(), hourlyPrices);
+				 System.out.println("For " + getAID().getLocalName() + " New cost is: " + newCost + " last cost is " + lastCost );
+
+				 if (newCost > lastCost){ //optimize
+					 
+					//Recalculate appliance cost based on new prices
+					 fu.calculateCostOfAllAppliances(casa, hourlyPrices);
+					//calculate budgets
+					 double shiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
+					 double nonShiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
+					 double availableBudget = casa.getBudget() - nonShiftBudget;
+					 System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
+					 if (availableBudget <= 0){
+						 //TODO: send original schedule
+						 //TODO: cut
+					     localLoad = fu.calculateHourlyLoad(casa);
+						 gson = new Gson();
+						 String json = gson.toJson(localLoad); //JSONfy
+						 reply.setContent(json);
+						 myLogger.log(Logger.INFO, "Over budget for non shift");
+						 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+						 System.out.println("sent acceptance");
+						 finalCost = fu.calculateOverallCost(casa);
+						 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialVirginCost + " Final cost is: " + finalCost );
+						 send(reply);
+						 lastPriceArray = hourlyPrices;
+					 }else{
+						//it can be afforded
+						
+							 fu.IWantConvenience(casa.getAppliances(), foreignLoad, localLoad, availableBudget, alpha);
+							 
+								 localLoad = fu.calculateHourlyLoad(casa);
+								 gson = new Gson();
+								 String json = gson.toJson(localLoad); //JSONfy
+								 reply.setContent(json);
+								 reply.setPerformative(ACLMessage.INFORM);
+								 lastPriceArray = hourlyPrices;
+								 double thisCost = fu.calculateOverallCost(casa);
+								 System.out.println("For " + getAID().getName() + " Last cost was: " + lastCost + " New cost is : " + thisCost );
+								 lastCost = thisCost;
+								 send(reply); 
+							 
+							
+					 } //end of checking budget
+				 }
+				 else{
+					 localLoad = fu.calculateHourlyLoad(casa);
+					 String json = gson.toJson(localLoad); //JSONfy
+					 reply.setContent(json);
+					 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					 System.out.println("sent acceptance");
+					 lastPriceArray = hourlyPrices;
+					 send(reply);
+				 }
+				
+				 
+				 
+				
+				 
+			 }
+			 else{ //price didn't change
+				  reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+				  localLoad = fu.calculateHourlyLoad(casa);
+					 System.out.println("sent acceptance");
+
+				  gson = new Gson();
+				  String json = gson.toJson(localLoad); //JSONfy
+				  reply.setContent(json);
+				  int on = 0;
+				  int off = 0;
+			//	  double[]consumptionSchedule = fu.calculateHourlyConsumption(casa); 
+				 finalLoad = fu.calculateHouseLoad(localLoad);
+				 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialVirginCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
+				 send(reply);
+
+				 	 
+			 }//end of checking if price has changed	
+		 } //end of checking which round is it
+/*
+public void optimizeSchedule(ACLMessage msg){
+	//get content
+	String content = msg.getContent();
+	ACLMessage reply  = msg.createReply();
+	if (content != null){
+		//get hourly prices
+		 Gson gson = new Gson();
+		 double [] foreignLoad = gson.fromJson(content, double[].class);
+		 Function fu = new Function();
+		 double alpha = foreignLoad[24];
+		 double[]localLoad = fu.calculateHourlyLoad(casa);
+		 //Reconstruct
+		 double [] hourlyPrices = fu.projectHourlyPrices(foreignLoad, localLoad, alpha);
+		 String result;
+		 if (lastPriceArray == null){			 //first pass 
+			 lastPriceArray = hourlyPrices;
+			 //Calculate each appliance cost
+			 fu.calculateCostOfAllAppliances(casa, hourlyPrices);
+			 //Game on
+			 //Get budgets
+			 double shiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
+			 double nonShiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
+			 double availableBudget = casa.getBudget() -nonShiftBudget;
+			 initialCost = fu.calculateOverallCost(casa);	
+			 double shiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "shifteable");
+			 double nonShiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "nonShifteable");
+			 System.out.println("Middle shiftLoad: " +shiftLoad );
+			 System.out.println("Middle nonShiftLoad " + nonShiftLoad);
+			
+			 System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
+			 System.out.println("For " + getAID().getLocalName() + " Available budget is " +availableBudget);
+			 if (availableBudget <= 0){
+				 	 String json = gson.toJson(localLoad);
+					 myLogger.log(Logger.INFO, "Over budget for non shift");
+					 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					 System.out.println("sent acceptance");
+					 
 					 finalCost = fu.calculateOverallCost(casa);
 					 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialCost + " Final cost is: " + finalCost );
 					 send(reply);		
 			 }
 			 else{
 				 	//it can be afforded
-					int offApp = fu.countOffAppliances(casa.getAppliances());
-				 	fu.IWantConvenience(casa.getAppliances(), hourlyPrices, availableBudget, offApp);
-				 	//Recalculate energy needs	
-				 	//Get consumption schedule for the next hour for this house
-				 	double[]consumptionSchedule = fu.calculateHourlyConsumption(casa);
-					reply.setPerformative(ACLMessage.INFORM);
-					gson = new Gson();
-					String json = gson.toJson(consumptionSchedule); //JSONfy
-					reply.setContent(json);
-					System.out.println("Load of house is: " + fu.calculateHouseLoad(consumptionSchedule) );
-					System.out.println(getAID().getLocalName() + " turned off " + offApp + " appliances in this round");
-					reply.setConversationId("prices");
-					send(reply);
+				 	//Turn off shifteables for first pass
+				 		fu.turnOffAllShifteables(casa.getAppliances());
+				 
+				 	result = fu.IWantConvenience(casa.getAppliances(), foreignLoad, localLoad, availableBudget, alpha);
+					if (result == "change"){ //Inform of changes
+						int offApp = fu.countOffAppliances(casa.getAppliances());
+						//Recalculate energy needs	
+					 	//Get consumption schedule for the next hour for this house
+						localLoad = fu.calculateHourlyLoad(casa);
+						reply.setPerformative(ACLMessage.INFORM);
+						gson = new Gson();
+						String json = gson.toJson(localLoad); //JSONfy
+						reply.setContent(json);
+						System.out.println("Load of house is: " + fu.calculateHouseLoad(localLoad) );
+						System.out.println(getAID().getLocalName() + " turned off " + offApp + " appliances in this round");
+						reply.setConversationId("prices");
+						send(reply);
+					}
+					else if(result == "not-change"){
+						int offApp = fu.countOffAppliances(casa.getAppliances());
+						reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+						localLoad = fu.calculateHourlyLoad(casa);
+						 System.out.println("sent acceptance");
+						 finalCost = fu.calculateOverallCost(casa); //$$
+						 finalLoad = fu.calculateHouseLoad(localLoad);
+						 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + offApp + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
+						 send(reply);
+						
+					}
+				 	
+				 	
+				 	
 			 } //end of checking game for the first round
 			 
 		 }
 		 else{ //N pass
-			 
+			 hourlyPrices = fu.projectHourlyPrices(foreignLoad, localLoad, alpha);
 			 //check if prices are the same
 			 boolean flag = false;
 			 for (int i=0; i< 24; i++){
@@ -189,7 +413,6 @@ public void optimizeSchedule(ACLMessage msg){
 			 if (flag){//price has changed
 				//Recalculate appliance cost based on new prices
 				 fu.calculateCostOfAllAppliances(casa, hourlyPrices);
-				 
 				 //calculate budgets
 				 double shiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
 				 double nonShiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
@@ -198,257 +421,84 @@ public void optimizeSchedule(ACLMessage msg){
 				 if (availableBudget <= 0){
 					 //TODO: send original schedule
 					 //TODO: cut
-					 double[]consumptionSchedule = fu.calculateHourlyConsumption(casa);
+				     localLoad = fu.calculateHourlyLoad(casa);
 					 gson = new Gson();
-					 String json = gson.toJson(consumptionSchedule); //JSONfy
+					 String json = gson.toJson(localLoad); //JSONfy
 					 reply.setContent(json);
 					 myLogger.log(Logger.INFO, "Over budget for non shift");
 					 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+					 System.out.println("sent acceptance");
 					 finalCost = fu.calculateOverallCost(casa);
 					 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialCost + " Final cost is: " + finalCost );
 					 send(reply);
+					 lastPriceArray = hourlyPrices;
 				 }else{
 					//it can be afforded
-						int offApp = fu.countOffAppliances(casa.getAppliances());
-					 String result = fu.IWantConvenience(casa.getAppliances(), hourlyPrices, availableBudget, offApp);
-					 if (result == "no-change"){
-						 double[]consumptionSchedule = fu.calculateHourlyConsumption(casa);
-						 gson = new Gson();
-						 String json = gson.toJson(consumptionSchedule); //JSONfy
-						 reply.setContent(json);
-						 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-						 finalCost = fu.calculateOverallCost(casa);
-						 finalLoad = fu.calculateHouseLoad(consumptionSchedule);
-						 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialCost + " Final cost is: " + finalCost  + "initial load was: " + initialLoad + "final load is" + finalLoad);
-						 send(reply); 
-					 }
-					 else if(result == "change"){
-						//Recalculate energy needs	
-						 	//Get consumption schedule for the next hour for this house
-						 	double[]consumptionSchedule = fu.calculateHourlyConsumption(casa);
-							reply.setPerformative(ACLMessage.INFORM);
-							gson = new Gson();
-							String json = gson.toJson(consumptionSchedule); //JSONfy
-							reply.setContent(json);
-							System.out.println("Load of house is: " + fu.calculateHouseLoad(consumptionSchedule) );
-							System.out.println(getAID().getLocalName() + " turned off " + offApp + " appliances in this round");
-							reply.setConversationId("prices");
-							send(reply);
-					 }	 
+					
+						result = fu.IWantConvenience(casa.getAppliances(), foreignLoad, localLoad, availableBudget, alpha);
+						 if (result == "change"){ 
+							 localLoad = fu.calculateHourlyLoad(casa);
+							 gson = new Gson();
+							 String json = gson.toJson(localLoad); //JSONfy
+							 reply.setContent(json);
+							 reply.setPerformative(ACLMessage.INFORM);
+							 lastCost = fu.calculateOverallCost(casa);
+							 lastPriceArray = hourlyPrices;
+							 send(reply); 
+						 }
+						 else if (result == "not-change"){ 
+							 shiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
+							 nonShiftBudget = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
+							 System.out.println("shift final price: " +shiftBudget );
+							 System.out.println("nonShift final price: " + nonShiftBudget);
+							 double shiftCost = fu.getCostOfAppByCategory(casa.getAppliances(), "shifteable");
+							 double nonShiftCost = fu.getCostOfAppByCategory(casa.getAppliances(), "nonShifteable");
+							 System.out.println("shiftCost: " +shiftCost );
+							 System.out.println("nonShiftCost " + nonShiftCost);
+							 double shiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "shifteable");
+							 double nonShiftLoad = fu.getLoadOfAppByCategory(casa.getAppliances(), "nonShifteable");
+							 System.out.println("shiftLoad: " +shiftLoad );
+							 System.out.println("nonShiftLoad " + nonShiftLoad);
+							 double loadChecker =  fu.calculateHoraLoad(casa.getAppliances());
+							 System.out.println("LoadChecker shows  " + loadChecker);
+							  int  offApp = fu.countOffAppliances(casa.getAppliances());
+								 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+								 localLoad = fu.calculateHourlyLoad(casa);
+								 System.out.println("sent acceptance");
+								 gson = new Gson();
+								 String json = gson.toJson(localLoad); //JSONfy
+								 reply.setContent(json);
+								 finalCost = fu.calculateOverallCost(casa); //$$
+								 finalLoad = fu.calculateHouseLoad(localLoad);
+								 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + offApp + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
+								 send(reply);
+								
+						 }
+						
 				 } //end of checking budget
-			 } 
-			 else{
+			 }
+			 else{ //price didn't change
 				  reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+				  localLoad = fu.calculateHourlyLoad(casa);
+					 System.out.println("sent acceptance");
+
+				  gson = new Gson();
+				  String json = gson.toJson(localLoad); //JSONfy
+				  reply.setContent(json);
 				  int on = 0;
 				  int off = 0;
-				  double[]consumptionSchedule = fu.calculateHourlyConsumption(casa); 
+			//	  double[]consumptionSchedule = fu.calculateHourlyConsumption(casa); 
 				 finalCost = fu.calculateOverallCost(casa); //$$
-				 finalLoad = fu.calculateHouseLoad(consumptionSchedule);
+				 finalLoad = fu.calculateHouseLoad(localLoad);
 				 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
-				 
+				 send(reply);
 
 				 	 
 			 }//end of checking if price has changed	
 		 } //end of checking which round is it
-		 
+	*/	 
 	}
 }
-	private class dailyConsumptionSchedule extends CyclicBehaviour {
-		
-		@Override
-		public void action() {
-			// 
-			MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REQUEST), MessageTemplate.MatchConversationId("daily-consumption"));
-			ACLMessage msg = myAgent.receive(mt);
-			
-			
-			if (msg != null){
-				
-				//Message received, process it.
-				String content = msg.getContent();
-				ACLMessage reply  = msg.createReply();
-
-			   if ((content!= null) && (content.indexOf("initialSchedule") != -1)){
-				   
-
-				   //Get consumption  for this house
-					Function fu = new Function();
-					double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
-					initialLoad = fu.calculateHouseLoad(casa.getAppliances());
-					reply.setPerformative(ACLMessage.INFORM);
-					reply.setConversationId("daily-consumption");
-					Gson gson = new Gson();
-					String json = gson.toJson(dailyConsumption); //JSONfy
-					reply.setContent(json);
-				} 
-				else {
-					//MEssage is incorrect
-					reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-					reply.setContent("Content not understood");
-					
-				}
-				
-				myAgent.send(reply);
-			}
-			
-			else {
-				block();
-			}
-			
-		}
-		
-		
-	}
-	
-	
-	
-	
-	
-	private class optimizeHouseSchedule extends CyclicBehaviour{
-
-		@Override
-		public void action() {
-			// 
-			MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), MessageTemplate.MatchConversationId("prices"));
-			ACLMessage msg = myAgent.receive(mt);
-			
-			if (msg != null){
-				//Message received, process it.
-				String content = msg.getContent();
-				ACLMessage reply  = msg.createReply();
-			
-			 if (content!= null) {
-				 
-				 Gson gson = new Gson();
-				 double [] hourlyPrices = gson.fromJson(content, double[].class);
-				 if (lastPriceArray == null){ //First Pass
-					 lastPriceArray = hourlyPrices;	 
-					// Based on hourlyPrices, see what appliances it can be turned off given preference
-						Function fu = new Function();
-
-						//First, calculate prices!
-						fu.calculateHourlyMoneyConsumption(casa.getAppliances(), hourlyPrices);
-						
-					 	double nonShiftBudget = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "shifteable");
-						double shiftBudget = casa.getBudget() - nonShiftBudget;
-						double shiftConsumption = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "nonShifteable");
-						 
-						initialCost = nonShiftBudget + shiftConsumption;
-						
-						System.out.println("For " + getAID().getLocalName() + " Budget is " + casa.getBudget() + " shift: " + shiftBudget + " nonshift " + nonShiftBudget );
-						myLogger.log(Logger.INFO, " For " + getAID().getName() + " nonShift Cons : " + shiftConsumption  );
-
-
-						if (shiftBudget <= 0){
-							myLogger.log(Logger.INFO, "Over budget for non shift");
-							 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-							 finalCost = fu.getTotalConsumption(casa.getAppliances());
-							 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialCost + " Final cost is: " + finalCost );
-							 myAgent.send(reply);
-							 block();
-							
-						}
-						else{
-				//			fu.IWantConvenience(casa.getAppliances(), hourlyPrices, shiftBudget);
-							//Recalculate energy needs	
-							   //Get consumption for the next hour for this house
-								
-								double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
-								reply.setPerformative(ACLMessage.INFORM);
-								gson = new Gson();
-								String json = gson.toJson(dailyConsumption); //JSONfy
-								reply.setContent(json);
-								reply.setConversationId("prices");
-								myAgent.send(reply);
-								 block();
-						}
-											 
-				 } else{ //N pass
-						Function fu = new Function();
-
-					//check if prices are the same
-					 boolean flag = false;
-					 for (int i = 0; i < 24; i++){
-						 if (hourlyPrices[i] != lastPriceArray[i]){ //If they are, flag it
-							 flag = true;
-							 
-						 }
-					 } 
-					 if (flag){ //If a price has changed, optimize again
-						// Based on hourlyPrices, see what appliances it can be turned off given preference
-						 
-						 	for (Appliance app: casa.getAppliances()){
-						 		if (app.isOn() == false){
-						 			System.out.println(app.getName() + " of " + getAID().getName() + " is off");
-						 		}
-						 	}
-						 	double nonShiftBudget = fu.getTypeOfApplianceConsumption(casa.getAppliances(), "shifteable");
-							double shiftBudget = casa.getBudget() - nonShiftBudget;
-							
-							if (shiftBudget <= 0){
-								myLogger.log(Logger.INFO, "Over budget for non shift");
-								double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
-								reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-								gson = new Gson();
-								String json = gson.toJson(dailyConsumption); //JSONfy
-								reply.setContent(json);
-								reply.setConversationId("prices");
-								//Update local
-								lastPriceArray = hourlyPrices;
-								send(reply);
-							}
-							else{
-						//		fu.IWantConvenience(casa.getAppliances(), hourlyPrices, shiftBudget);
-								//Recalculate energy needs	
-								//Get consumption for the next hour for this house
-									
-									double[] dailyConsumption = fu.getHourlyConsumption(casa.getAppliances());
-
-									
-									reply.setPerformative(ACLMessage.INFORM);
-									gson = new Gson();
-									String json = gson.toJson(dailyConsumption); //JSONfy
-									reply.setContent(json);
-									reply.setConversationId("prices");
-									//Update local
-									lastPriceArray = hourlyPrices;
-							}
-							
-						
-							
-					 }else{ //If prices are the same, then inform of no change
-						 reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-						  fu = new Function();
-						  int on = 0;
-						  int off = 0;
-							 
-						 finalCost = fu.getTotalConsumption(casa.getAppliances()); //$$
-						 finalLoad = fu.calculateHouseLoad(casa.getAppliances());
-						 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
-						 
-						 
-					 }
-					 
-					 
-				 }
-				 			 
-				} 
-				else {
-					//MEssage is incorrect
-					reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-					reply.setContent("Content not understood");
-				}
-				
-				myAgent.send(reply);
-			}
-			
-			else {
-				block();
-			}
-			
-		}
-		
-	}
 	
 	
 }

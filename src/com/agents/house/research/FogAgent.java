@@ -1,11 +1,15 @@
 package com.agents.house.research;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.google.gson.Gson;
 import com.house.research.Appliance;
@@ -44,6 +48,7 @@ public class FogAgent extends Agent {
 	Map<String, double[]> preferences = new HashMap<String, double[]>();
 	 public final static String DAILY = "daily-consumption";
 	 public final static String PRICE = "prices";
+	 public final static String ACCEPTANCE = "acceptance";
 
 	
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
@@ -79,7 +84,7 @@ public class FogAgent extends Agent {
 		}
 		
 		//Listen for initial schedules 
-		addBehaviour(new WakerBehaviour (this, 20000){
+		addBehaviour(new WakerBehaviour (this, 10000){
 			protected void handleElapsedTimeout(){
 				DFAgentDescription template = new DFAgentDescription();
 				ServiceDescription sd = new ServiceDescription();
@@ -146,9 +151,21 @@ public class FogAgent extends Agent {
 	}
 	
 	public void sendStatusOfEndGame(){
+		ACLMessage message = new ACLMessage(ACLMessage.AGREE);//RQST Message
 		for (int i =0; i <houseAgents.length;i++){
-			
+			message.addReceiver(houseAgents[i]);
 		}
+		message.setConversationId(ACCEPTANCE);
+		message.setReplyWith("Request" + System.currentTimeMillis());
+		//Send final pricing
+		double[] precios = pv.getPriceArray();
+		Gson gson = new Gson();
+		String json = gson.toJson(precios);
+		message.setContent(json);
+		showHourlyLoad();
+		send(message);
+		
+		
 	}
 	
 	public void gatherInitSchedules(ACLMessage msg){
@@ -183,6 +200,7 @@ public class FogAgent extends Agent {
 	}
 
 	public void senderToNextAgent(){
+		
 		if (responseCounter < houseAgents.length ){	
 			sendPrice(houseAgents[responseCounter]);			
 		}
@@ -202,6 +220,7 @@ public class FogAgent extends Agent {
 			System.out.println("Current Load is: " + Lh);
 			double avgPrice = averagePrice(pv.getPriceArray());
 			System.out.println("Average price is: " + avgPrice );
+			sendStatusOfEndGame();
 		} else if(numOfChanges > 0){
 			if(numOfChanges <= houseAgents.length && responseCounter == houseAgents.length){
 				round++;
@@ -235,15 +254,31 @@ public class FogAgent extends Agent {
 		ACLMessage message = new ACLMessage(ACLMessage.INFORM);//RQST Message
 		Gson gson = new Gson();
 		if(pv.getPriceArray()!= null){
-			String json = gson.toJson(pv.getPriceArray());
+			//prepare package
+			double[] loadOfRestOfHouses = new double[25];
+			loadOfRestOfHouses = getSchedulesOfRestOfHouses(Agent.getLocalName());
+			
+			loadOfRestOfHouses[24] = alpha;
+			String json = gson.toJson(loadOfRestOfHouses);
 			message.addReceiver(Agent);
 			message.setConversationId(PRICE);
 			message.setReplyWith("Request" + System.currentTimeMillis());
 			message.setContent(json);
+			showHourlyLoad();
 			send(message);
 		}
 	}
-	
+	public double[] getSchedulesOfRestOfHouses(String housename){
+		
+		Map<String, double[]> restOfHouses = new HashMap<String, double[]>();
+		restOfHouses.putAll(preferences);
+		restOfHouses.remove(housename);
+		
+		double[] others = restOfHousesLoad(restOfHouses);
+		return others;
+		
+		
+	}
 	public void storeHousePreferences(double[] houseLoad, String houseName){
 		preferences.put(houseName, houseLoad);
 	}
@@ -253,14 +288,27 @@ public class FogAgent extends Agent {
 			preferences.put(houseName, houseLoad);
 			calculateLoad(); //Recalculate Load and price
 	}
-	
+	public double[] restOfHousesLoad(Map<String, double[]> restOfHouses){
+		double [] restLoad = new double[25];
+		Arrays.fill(restLoad, 0);
+		
+		for (Map.Entry<String, double[]> entry:restOfHouses.entrySet()){
+			double[] schedule = entry.getValue();
+			for (int i = 0; i < 24; i++){
+				restLoad[i]+=schedule[i];			
+			}
+		}
+		
+		return restLoad;
+		
+	}
 	public void calculateLoad(){
 		//double [] cargaHora = new double[24];
 		Arrays.fill(cargaHora, 0);
 		Lh = 0;
 		for (Map.Entry<String, double[]> entry:preferences.entrySet()){
 			double[] schedule = entry.getValue();
-			for (int i = 0; i < 23; i++){
+			for (int i = 0; i < 24; i++){
 				cargaHora[i]+=schedule[i];
 				
 			}
@@ -273,6 +321,10 @@ public class FogAgent extends Agent {
 		
 	}
 	
+	public void showHourlyLoad(){
+		for (double d: cargaHora){
+		}
+	}
 	
 	
 	public void gatherNewSchedule(ACLMessage msg){
@@ -289,13 +341,13 @@ public class FogAgent extends Agent {
 	
 	
 	public void calculateHourlyPrices( double alpha, double[] hourlyLoad) {
-		double[] hourlyPrices = new double[24];
+		double[] hourlyPrices = new double[25];
 		//alpha*Lh*Log10(lh+1)
 		//double alpha = 0.2;
 		for (int i = 0; i< 24; i++){
 			hourlyPrices[i] = hourlyLoad[i] * alpha * Math.log10(hourlyLoad[i] + 1);
-			
 		}
+		hourlyPrices[24] = alpha;
 		
 		pv.setPriceArray(hourlyPrices);
 		
@@ -328,8 +380,7 @@ public class FogAgent extends Agent {
 	}
 	
 	
-	
-	
+
 	
 
 	

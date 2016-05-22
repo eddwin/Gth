@@ -5,7 +5,14 @@ public class PowerVariable {
 	
 
 	double[] mHourlyPriceArray;
-	
+	public double[] getForeignLoad() {
+		return foreignLoad;
+	}
+
+	public void setForeignLoad(double[] foreignLoad) {
+		this.foreignLoad = foreignLoad;
+	}
+	double [] foreignLoad;
 
 	int change;
 
