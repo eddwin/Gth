@@ -1,0 +1,11 @@
+creator STARTED
+Hello! House-agent house5@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house6@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house1@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house4@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house3@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house2@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house0@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house7@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house8@192.168.10.155:1099/JADE is ready.
+Hello! House-agent house9@192.168.10.155:1099/JADE is ready.

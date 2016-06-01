@@ -498,7 +498,7 @@ public String IWantConvenience(List<Appliance>  appliances, double[] foreignLoad
 	public double[] calculateHourlyLoad(House casa){
 		List<Appliance> appliances = new ArrayList<Appliance>();
 		appliances = casa.getAppliances();
-		double[]consumption = new double[24];
+		double[]consumption = new double[27];
 		for (Appliance a: appliances){
 			if (a.isOn()){
 				int[]schedule = a.getConsumptionSchedule();
@@ -714,6 +714,17 @@ public String IWantConvenience(List<Appliance>  appliances, double[] foreignLoad
 			}
 		}
 		
+	}
+	
+	public double ComfortIndex (List<Appliance> allApp){
+		int i = 0;
+		
+		for (Appliance a:allApp){
+			if (a.isOn()){
+				i++;
+			}
+		}
+		return i/allApp.size();
 	}
 	
 	

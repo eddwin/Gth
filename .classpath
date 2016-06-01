@@ -2,7 +2,18 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry exported="true" kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade.jar"/>
-	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/jade.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/poi-3.14-20160307.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/httpclient-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/commons-codec-1.9.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/fluent-hc-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/httpclient-cache-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/httpclient-win-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/httpcore-4.4.4.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/httpmime-4.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/jna-4.1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/jna-platform-4.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

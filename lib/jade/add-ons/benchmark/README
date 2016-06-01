@@ -1,0 +1,85 @@
+Benchmark on JADE Message Transport package.
+
+INTRODUCTION
+This package contains a Java implementation of test to show 
+how works JADE Message Transport and to show JADE behaviours
+when agents' number is high. 
+You can run these tests for two configurations:
+1) Intra platform communication:
+	a) all agents are in Main-Container;
+	b) receiver agents in Main-Container and sender agents
+	   in onother Container;
+2) Inter platform communication:
+	a) MTP IIOP;
+	b) MTP ORBacus;
+	c) MTP HTTP.
+
+LICENSE
+See LICENSE file for license information.
+
+SOFTWARE VERSIONS
+This version of the package was tested using the following software:
+  - JDK 1.3.0 and higher
+  - JADE 2.5
+
+COMPILING
+If you have "ANT" program on your computer, in benchmark find build.xml
+so digit: ant
+Notice that kind of Makefile works with every OS.
+
+PACKAGE CONTENTS
+Enclosed in this package is the source code, some typical configuration files,
+and some documentation. A tutorial is also available with all the JADE tutorials.
+After compilation you'll find also classess and doc directories. 
+
+
+GETTING STARTED
+- compile the benchmark java source files
+- set the CLASSPATH to include jade.jar and benchmark/classes
+- if you want to benchmark the inter-platform communication then the
+  CLASSPATH must also include the implementation of the MTP (e.g. iiop.jar,
+  httpMTP.jar, ORBacusMTP.jar)
+- all tests can be executed by passing a configuration file to the JADE platform,
+  as follows:
+  java jade.Boot -conf file.conf
+- in the conf directory a set of typical configuration files have been provided:
+  - receiverSernderMainCont.conf 
+	for intra-platform intra-container communication
+  - receiver.conf and sender2Containers.conf 
+	for intra-platform inter-container communication
+  - receiver.conf and senderIIOP.conf
+	for inter-platform communication based on JDK1.4 IIOP implementation
+  - receiverOrbacus.conf and senderOrbacus.conf
+	for inter-platform communication based on ORBacus IIOP implementation
+  - receiverHttp.conf and senderHttp.conf
+	for inter-platform communication based on ORBacus IIOP implementation
+  REMIND TO:
+  - launch before the container/platform with the receivers agents, and after
+    the container/platform with the sender agents
+  - edit the configuration files and set the proper values:
+    - host is the hostname of the JADE platform with the receivers
+    - hap is the hap of the JADE platform with the receivers
+    - IOR is the IOR of the JADE platform with the receivers
+    - iterations is the number of times the message exchange will be
+      executed for each couple of agents
+    - couples is the number of couples of agents
+    - agents is the list of agents to be launched
+
+
+
+PARALLEL TEST
+In the previous tests each sender sends a message and wait for a reply before sending 
+the next one, in a "serial" fashion.
+For the group of tests "parallel", a sender sends in sequence all the messages without 
+waiting for the replies.
+Some configuration files for the parallel tests are available:
+    - ParalleTestSingleContainer.conf
+	for intra-container measurements
+    - ParalleTest2Containers_TX.conf, ParalleTest2Containers_RX.conf
+	for inter-container measurements
+
+
+
+--
+Elisabetta Cortese
+elisabetta.cortese@TiLab.com

@@ -3,7 +3,14 @@ package com.house.research;
 public class PowerVariable {
 	
 	
+	public double[] getLoads() {
+		return loads;
+	}
 
+	public void setLoads(double[] loads) {
+		this.loads = loads;
+	}
+	double [] loads;
 	double[] mHourlyPriceArray;
 	public double[] getForeignLoad() {
 		return foreignLoad;

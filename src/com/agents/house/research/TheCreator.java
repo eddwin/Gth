@@ -19,7 +19,7 @@ public class TheCreator extends Agent {
 		try{
 			//Get container
 			ContainerController container = (ContainerController) getContainerController();
-			for ( int i = 0; i < 30; i++){
+			for ( int i = 0; i < 40; i++){
 				//randomBudget = random.nextInt(310);
 				mArgs[1] = randomBudget();
 				mArgs[2] = randomNumOfShifteable();
@@ -38,7 +38,6 @@ public class TheCreator extends Agent {
 		Random r = new Random();
 		int i1 = r.nextInt(max - min + 1) + min;
 		return (double) i1;
-		
 	}
 
 	public int randomNumOfShifteable (){

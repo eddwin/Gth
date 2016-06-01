@@ -1,0 +1,48 @@
+<project name="Benchmark" default="compile" basedir=".">
+  <!-- set global properties for this build -->
+  <property name="src" value="src"/>
+  <property name="build" value="classes"/>
+  <property name="doc" value="doc"/>
+  <property name="dist" value="../.."/>
+  <property name="conf" value="conf"/>
+  <property name="packageDir" value="benchmark/roundTripTime"/>
+  <property name="libJADEDir" value="../../lib"/>
+  <property name="classpath" value="../..;${libJADEDir}/jade.jar;${libJADEDir}/jadeTools.jar;${libJADEDir}/iiop.jar;${libJADEDir}/Base64.jar;"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the directories structure used to store files -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <!-- Compile the javadoc code from ${src} into ${doc} -->
+  <target name="doc" depends="init">
+    <mkdir dir="${doc}/api"/>
+    <javadoc sourcepath="${src}/${packageDir}" sourcefiles="${src}/${packageDir}/*.java" destdir="${doc}/api" author="true" windowtitle="Message RoundTrip Time Benchmark API"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src}" destdir="${build}" classpath="${classpath}" nowarn="off" optimize="on" deprecation="on"/>
+  </target>
+
+  <!-- Make distribution zip file and put in ${dist} -->
+  <target name="dist" depends="init, clean">
+    <jar jarfile="${dist}/benchmarkAdd-on.zip">
+      <fileset dir="${dist}" includes="add-ons/benchmark/${src}/**"/>
+      <fileset dir="${dist}" includes="add-ons/benchmark/*"/>
+      <fileset dir="${dist}" includes="add-ons/benchmark/${conf}/**"/>
+    </jar>
+  </target>
+
+  <!-- delete ${build} and ${lib} directories -->
+  <target name="clean" description="clean up">
+    <!-- Delete the ${build} directory tree -->
+    <delete includeEmptyDirs="true">
+      <fileset dir="${build}"/>
+    </delete>
+  </target>
+
+  <target name="all" depends="init, doc, compile, dist"/>
+
+</project>
