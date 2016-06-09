@@ -63,12 +63,14 @@ public class FogAgent extends Agent {
 	private double startRoundTime;
 	private double endRoundTime;
 	private double initTime;
+	int finalCounter;
 	int numOfChanges;
 	private ResultsWarehouse warehouse;
 	
 	Map<String, double[]> initSchedules  = new HashMap<String, double[]>();
 	Map<String, double[]> roundTimers = new HashMap<String, double[]>();
 	Map<String, double[]> preferences = new HashMap<String, double[]>();
+	Map<String, Double> uci = new HashMap<String, Double>();
 	 public final static String DAILY = "daily-consumption";
 	 public final static String PRICE = "prices";
 	 public final static String ACCEPTANCE = "acceptance";
@@ -171,6 +173,10 @@ public class FogAgent extends Agent {
 					responseCounter++;
 					agentChecker();
 				}
+				else if (msg.getPerformative() == ACLMessage.CONFIRM){
+					finalCounter++;
+					show_index(msg);
+				}
 			}
 			else{
 				block();
@@ -180,12 +186,29 @@ public class FogAgent extends Agent {
 		
 	}
 	
+	public void show_index(ACLMessage msg){
+			
+		Gson gson = new Gson();
+		double index = gson.fromJson(msg.getContent(), double.class);
+			uci.put(msg.getSender().getLocalName(), index);
+			
+		if (houseAgents.length  >= finalCounter){
+			//TODO: Imprimir a Excel
+			
+		}
+			
+		
+	}
+	
+	
+	
 	public void sendStatusOfEndGame(){
 		ACLMessage message = new ACLMessage(ACLMessage.AGREE);//RQST Message
 		for (int i =0; i <houseAgents.length;i++){
 			message.addReceiver(houseAgents[i]);
 		}
 		message.setConversationId(ACCEPTANCE);
+		message.setPerformative(ACLMessage.AGREE);
 		message.setReplyWith("Request" + System.currentTimeMillis());
 		//Send final pricing
 		double[] precios = pv.getPriceArray();
@@ -387,6 +410,8 @@ public class FogAgent extends Agent {
 		double [] casaLoad = gson.fromJson(json, double[].class);
 		//TODO:STORE TIMES HERE
 		messageRoundTracker(msg.getSender().getLocalName(), initTime, casaLoad[25], finalTime);
+		
+		
 		storeHousesPreferenceAndUpdate(casaLoad, msg.getSender().getLocalName());
 		agentChecker();
 	}

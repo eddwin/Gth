@@ -1,1 +1,1 @@
-http://radius.cs.nthu.edu.tw:7778/acc
+http://192.168.10.155:7778/acc

@@ -126,10 +126,17 @@ public void showFinalTally(ACLMessage msg){
 	finalCost = fu.calculateOverallCost(casa);
 	double savings =  initialAlgorithmCost - finalCost;
 	int appsOff = fu.countOffAppliances(casa.getAppliances());
-
+	double index = fu.ComfortIndex(casa.getAppliances());
+	msg.createReply();
+	msg.setPerformative(ACLMessage.CONFIRM);
+	msg.setConversationId("index");
+	msg.setReplyWith("Request" + System.currentTimeMillis());
+	String json = gson.toJson(index, double.class);
+	msg.setContent(json);
+	send(msg);
 	System.out.println("For: " + getAID().getLocalName());
 	System.out.println("Initial Load was: " + initialLoad + " Final Load: " + finalLoad );
-	System.out.println("Costo without preferences: " + initialVirginCost + " Final Cost: " + finalCost );
+	System.out.println("Cost without preferences: " + initialVirginCost + " Final Cost: " + finalCost );
 	System.out.println("Initial  Cost: " + initialVirginCost + " Final Cost: " + finalCost );
 	System.out.println("Savings were: " +  savings);
 	System.out.println("Apps off were: " + appsOff);
@@ -232,7 +239,6 @@ public void optimizeSchedule(ACLMessage msg){
 				lastCost = fu.calculateOverallCost(casa);
 				initialAlgorithmCost = lastCost;
 				localLoad[25] = receiptTime;
-				localLoad[26] = fu.ComfortIndex(casa.getAppliances());
 				String json = gson.toJson(localLoad); //JSONfy
 				reply.setContent(json);
 				System.out.println("Load of house is: " + fu.calculateHouseLoad(localLoad) );
@@ -272,7 +278,6 @@ public void optimizeSchedule(ACLMessage msg){
 					     localLoad = fu.calculateHourlyLoad(casa);
 						 gson = new Gson();
 						 localLoad[25] = receiptTime;
-						 localLoad[26] = fu.ComfortIndex(casa.getAppliances());
 
 						 String json = gson.toJson(localLoad); //JSONfy
 						 reply.setContent(json);

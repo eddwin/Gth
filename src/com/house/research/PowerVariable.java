@@ -11,6 +11,7 @@ public class PowerVariable {
 		this.loads = loads;
 	}
 	double [] loads;
+	
 	double[] mHourlyPriceArray;
 	public double[] getForeignLoad() {
 		return foreignLoad;
