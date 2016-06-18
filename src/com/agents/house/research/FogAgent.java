@@ -65,15 +65,24 @@ public class FogAgent extends Agent {
 	private double initTime;
 	int finalCounter;
 	int numOfChanges;
+	double initSystemTime;
+	double finalSystemTime;
+	double initRoundTime;
+	double finalRoundTime;
 	private ResultsWarehouse warehouse;
 	
 	Map<String, double[]> initSchedules  = new HashMap<String, double[]>();
 	Map<String, double[]> roundTimers = new HashMap<String, double[]>();
 	Map<String, double[]> preferences = new HashMap<String, double[]>();
-	Map<String, Double> uci = new HashMap<String, Double>();
+	Map<String, double[]> finalResults = new HashMap<String, double[]>();
 	 public final static String DAILY = "daily-consumption";
 	 public final static String PRICE = "prices";
 	 public final static String ACCEPTANCE = "acceptance";
+	 public final static String RESULTS = "results";
+	 public final static String LIST = "List";
+	 
+	 public final static String ADDRESS = "http://192.168.0.3:7778/acc";
+	// public final static String ADDRESS = "http://140.114.77.184:7778/acc";
 
 	
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
@@ -113,36 +122,13 @@ public class FogAgent extends Agent {
 		//Listen for initial schedules 
 		addBehaviour(new WakerBehaviour (this, 10000){
 			protected void handleElapsedTimeout(){
-				DFAgentDescription template = new DFAgentDescription();
-				ServiceDescription sd = new ServiceDescription();
-				sd.setType("house-consumption");
-				template.addServices(sd);
-				
-				try {
-					DFAgentDescription[] result = DFService.search(myAgent, template);
-					houseAgents = new AID[result.length];
-					for (int i = 0; i < houseAgents.length; i++){
-						houseAgents[i] = result[i].getName();
-					}			
-				} 
-				catch (FIPAException fe) {
-					fe.printStackTrace();
-				}
-				//Perform the request
-				//Step 1: Gather initial schedules from all houses
-				ACLMessage request = new ACLMessage(ACLMessage.REQUEST);//RQST Message
-				for (int i = 0; i < houseAgents.length; i++){ //To all houses
-					request.addReceiver(houseAgents[i]);
-				}
-				request.setContent("initialSchedule"); //Asking for initial schedule
-				request.setConversationId("daily-consumption");
-				request.setReplyWith("Request" + System.currentTimeMillis());
-				myAgent.send(request); //Send messsage
+				request_houses();
 				myAgent.addBehaviour(new HearMessages());
 			}
 		});
 		
 	}
+	
 	
 	
 	private class HearMessages extends CyclicBehaviour {
@@ -152,9 +138,18 @@ public class FogAgent extends Agent {
 			
 			ACLMessage msg = receive();
 			if (msg != null){
+				
 				if (msg.getPerformative() == ACLMessage.INFORM){
 					
-					if (DAILY.equals(msg.getConversationId())) {
+					if (LIST.equals(msg.getConversationId())){
+						try {
+							requestInitialSchedules(msg);
+						} catch (Exception e) {
+						
+							e.printStackTrace();
+						}
+					}
+					else if (DAILY.equals(msg.getConversationId())) {
 						try {
 							gatherInitSchedules(msg);
 						} catch (Exception e) {
@@ -174,8 +169,16 @@ public class FogAgent extends Agent {
 					agentChecker();
 				}
 				else if (msg.getPerformative() == ACLMessage.CONFIRM){
-					finalCounter++;
-					show_index(msg);
+					if(RESULTS.equals(msg.getConversationId())){
+						finalCounter++;
+						try {
+							show_index(msg);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
 				}
 			}
 			else{
@@ -186,14 +189,59 @@ public class FogAgent extends Agent {
 		
 	}
 	
-	public void show_index(ACLMessage msg){
+	public void request_houses(){
+		initSystemTime = System.currentTimeMillis();
+		ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+		 AID receiver = new AID("manager@HousePlatform",AID.ISGUID);
+		 receiver.addAddresses(ADDRESS);
+		 msg.addReceiver(receiver);
+		 msg.setConversationId("gather");
+		 send(msg);
+		 System.out.println("Sent request to " + receiver);
+	}
+	
+	public void requestInitialSchedules(ACLMessage msg){
+		String json = msg.getContent();
+		Gson gson = new Gson();		
+		String [] houseNames = gson.fromJson(json, String[].class);
+		AID receiver = new AID();
+		houseAgents = new AID[houseNames.length];
+		for (int i = 0; i < houseNames.length;i++){
+			 receiver = new AID(houseNames[i]+"@HousePlatform",AID.ISGUID);
+			 receiver.addAddresses(ADDRESS);
+			 houseAgents[i] = receiver;
+			 System.out.println(houseAgents[i]);
+		}
+		
+		/*
+		 * Gather schedules from houseAgents
+		 */
+	
+		ACLMessage request = new ACLMessage(ACLMessage.REQUEST);//RQST Message
+		
+		for (int i = 0; i < houseAgents.length; i++){ //To all houses
+			receiver.addAddresses(ADDRESS);
+			request.addReceiver(receiver);
+		}
+		request.setContent("initialSchedule"); //Asking for initial schedule
+		request.setConversationId("daily-consumption");
+		request.setReplyWith("Request" + System.currentTimeMillis());
+		
+		send(request); //Send messsage
+		
+		
+	}
+	
+	public void show_index(ACLMessage msg) throws Exception{
 			
 		Gson gson = new Gson();
-		double index = gson.fromJson(msg.getContent(), double.class);
-			uci.put(msg.getSender().getLocalName(), index);
+		double[] results = gson.fromJson(msg.getContent(), double[].class);
+			finalResults.put(msg.getSender().getLocalName(), results);
 			
 		if (houseAgents.length  >= finalCounter){
 			//TODO: Imprimir a Excel
+			writeToExcel(RESULTS);
+			System.out.println("Final excel generated!");
 			
 		}
 			
@@ -205,6 +253,7 @@ public class FogAgent extends Agent {
 	public void sendStatusOfEndGame(){
 		ACLMessage message = new ACLMessage(ACLMessage.AGREE);//RQST Message
 		for (int i =0; i <houseAgents.length;i++){
+			houseAgents[i].addAddresses(ADDRESS);
 			message.addReceiver(houseAgents[i]);
 		}
 		message.setConversationId(ACCEPTANCE);
@@ -284,15 +333,18 @@ public class FogAgent extends Agent {
 				//End of round, still playing unless 70 (for now)
 				round++;
 				if (round == 70){
+					System.out.println("Round number: " + round) ;
+					
 					sendStatusOfEndGame();
+					finalSystemTime = System.currentTimeMillis();
+					System.out.println("It took the system: " + (finalSystemTime - initSystemTime));
 					//Print to Excel
 					warehouse.printWareHouse();
 				}
 				else{
 					//Store meassures!
 					storeRoundTracker("Round"+round);
-					
-					
+					System.out.println("Round number: " + round) ;
 					System.out.println("number of houses: " + houseAgents.length);
 					System.out.println("Number of acceptance: " + numOfAcceptance );
 					System.out.println("Number of changes: " + numOfChanges);
@@ -300,7 +352,6 @@ public class FogAgent extends Agent {
 					System.out.println("Current Load is: " + Lh);
 					double avgPrice = averagePrice(pv.getPriceArray());
 					System.out.println("Average price is: " + avgPrice );
-					System.out.println("Round number: " + round) ;
 				numOfAcceptance = 0;
 				numOfChanges = 0;
 				responseCounter = 0;
@@ -330,12 +381,12 @@ public class FogAgent extends Agent {
 			
 			loadOfRestOfHouses[24] = alpha;
 			String json = gson.toJson(loadOfRestOfHouses);
+			Agent.addAddresses(ADDRESS);
 			message.addReceiver(Agent);
 			message.setConversationId(PRICE);
 			message.setReplyWith("Request" + System.currentTimeMillis());
 			message.setContent(json);
 			showHourlyLoad();
-			
 			initTime = System.currentTimeMillis(); //Meassures
 			send(message);
 		}
@@ -482,7 +533,7 @@ public class FogAgent extends Agent {
 	
 		if (type == "initSchedule" ) {
 			try{
-	    		String filename = "/Users/edwinmejia/Documents/workspace/Houses_With_Agents /result/resultFog.xls";
+	    		String filename = "/home/pi/Documents/fog/Houses_With_Agents /result/resultFog.xls";
 	            HSSFWorkbook workbook = new HSSFWorkbook();
 	            HSSFSheet sheet = workbook.createSheet("InitSched");
 
@@ -513,6 +564,47 @@ public class FogAgent extends Agent {
 	    	}catch(Exception e){
 	    		 System.out.println(e);
 	    	}
+		}
+		else if (type == "results"){
+			int rowM = 0;
+			try{
+				
+				String filename = "/home/pi/Documents/fog/result/finalResults.xls";
+	            HSSFWorkbook workbook = new HSSFWorkbook();
+	            HSSFSheet sheet = workbook.createSheet("finalTally");
+	            
+	            double[] part = new double[finalResults.size()];
+	            
+	            for (Map.Entry<String, double[]> entry:finalResults.entrySet()){
+	            	rowM++;
+	            	part = entry.getValue();
+	            	String name = entry.getKey();
+	            	double index = part[0];
+	            	double initCost = part[1];
+	            	double finalCost = part[2];
+	            	HSSFRow row = sheet.createRow((short)rowM);
+	            	row.createCell(0).setCellValue(name);
+	    			row.createCell(1).setCellValue(index);
+	    			row.createCell(2).setCellValue(initCost);
+	    			row.createCell(3).setCellValue(finalCost);
+	    			row.createCell(4).setCellValue((initCost-finalCost));
+	            }
+	            HSSFRow rowhead = sheet.createRow((short)0);
+	            rowhead.createCell(0).setCellValue("HouseName");
+	            rowhead.createCell(1).setCellValue("index value");
+	            rowhead.createCell(2).setCellValue("initial cost");
+	            rowhead.createCell(3).setCellValue("finalcost");
+	            rowhead.createCell(4).setCellValue("Savings");
+	            
+	            
+	            FileOutputStream fileOut = new FileOutputStream(filename);
+	            workbook.write(fileOut);
+	            fileOut.close();
+	            System.out.println("Your excel file has been generated!");
+				
+			}catch (Exception e){
+				
+			}
 		}
 		
 		

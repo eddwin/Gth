@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry including="**/*.java" kind="src" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/jade.jar"/>
 	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/gson-2.2.2.jar"/>
 	<classpathentry kind="lib" path="/Users/edwinmejia/Documents/workspace/Houses_With_Agents /lib/jade/lib/poi-3.14-20160307.jar"/>
