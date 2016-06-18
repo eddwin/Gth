@@ -30,7 +30,7 @@ public class ResultsWarehouse {
 		 int rowM = 0; 
 		try{
 			
-    		String filename = "/home/pi/Documents/fog/result/RoundResults.xls";
+    		String filename = "./result/RoundResults.xls";
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet("RoundMessages");
         	Map<String, double[]> part = new HashMap<String, double[]>();

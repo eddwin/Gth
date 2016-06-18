@@ -81,8 +81,8 @@ public class FogAgent extends Agent {
 	 public final static String RESULTS = "results";
 	 public final static String LIST = "List";
 	 
-	 //public final static String ADDRESS = "ws://192.168.0.3:7778/acc";
-	 public final static String ADDRESS = "ws://140.114.202.174:7778/acc";
+	// public final static String ADDRESS = "http://192.168.0.3:7778/acc";
+	   public final static String ADDRESS = "ws://140.114.202.174:7778/acc";
 
 	
 	private Logger myLogger = Logger.getMyLogger(getClass().getName());
@@ -237,7 +237,7 @@ public class FogAgent extends Agent {
 		double[] results = gson.fromJson(msg.getContent(), double[].class);
 			finalResults.put(msg.getSender().getLocalName(), results);
 			
-		if (houseAgents.length  >= finalCounter){
+		if (houseAgents.length  <= finalCounter){
 			//TODO: Imprimir a Excel
 			writeToExcel(RESULTS);
 			System.out.println("Final excel generated!");
@@ -568,7 +568,7 @@ public class FogAgent extends Agent {
 			int rowM = 0;
 			try{
 				
-				String filename = "/home/pi/Documents/fog/result/finalResults.xls";
+				String filename = "./result/finalResults.xls";
 	            HSSFWorkbook workbook = new HSSFWorkbook();
 	            HSSFSheet sheet = workbook.createSheet("finalTally");
 	            
