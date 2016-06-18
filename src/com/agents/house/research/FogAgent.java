@@ -81,7 +81,7 @@ public class FogAgent extends Agent {
 	 public final static String RESULTS = "results";
 	 public final static String LIST = "List";
 	 
-	// public final static String ADDRESS = "http://192.168.0.3:7778/acc";
+	// public final static String ADDRESS = "http://192.168.0.103:7778/acc";
 	   public final static String ADDRESS = "ws://140.114.202.174:7778/acc";
 
 	
@@ -237,7 +237,7 @@ public class FogAgent extends Agent {
 		double[] results = gson.fromJson(msg.getContent(), double[].class);
 			finalResults.put(msg.getSender().getLocalName(), results);
 			
-		if (houseAgents.length  <= finalCounter){
+		if (houseAgents.length  == finalCounter){
 			//TODO: Imprimir a Excel
 			writeToExcel(RESULTS);
 			System.out.println("Final excel generated!");
@@ -338,7 +338,7 @@ public class FogAgent extends Agent {
 					finalSystemTime = System.currentTimeMillis();
 					System.out.println("It took the system: " + (finalSystemTime - initSystemTime));
 					//Print to Excel
-					warehouse.printWareHouse();
+					warehouse.printWareHouse(houseAgents.length);
 				}
 				else{
 					//Store meassures!
@@ -532,7 +532,7 @@ public class FogAgent extends Agent {
 	
 		if (type == "initSchedule" ) {
 			try{
-	    		String filename = "/home/pi/Documents/fog/Houses_With_Agents /result/resultFog.xls";
+	    		String filename = "./result/resultFog_"+houseAgents.length+".xls";
 	            HSSFWorkbook workbook = new HSSFWorkbook();
 	            HSSFSheet sheet = workbook.createSheet("InitSched");
 
@@ -568,7 +568,7 @@ public class FogAgent extends Agent {
 			int rowM = 0;
 			try{
 				
-				String filename = "./result/finalResults.xls";
+				String filename = "./result/resultFog_"+houseAgents.length+".xls";
 	            HSSFWorkbook workbook = new HSSFWorkbook();
 	            HSSFSheet sheet = workbook.createSheet("finalTally");
 	            

@@ -25,12 +25,12 @@ public class ResultsWarehouse {
 		
 	}
 	
-	public void printWareHouse(){
+	public void printWareHouse(int size){
 		//TODO: print to Excel
 		 int rowM = 0; 
 		try{
 			
-    		String filename = "./result/RoundResults.xls";
+    		String filename = "./result/RoundResults"+size+".xls";
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet("RoundMessages");
         	Map<String, double[]> part = new HashMap<String, double[]>();
