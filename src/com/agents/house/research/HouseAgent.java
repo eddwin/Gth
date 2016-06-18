@@ -39,7 +39,7 @@ public class HouseAgent extends Agent {
 	 public final static String PRICE = "prices";
 	 //public final static String ADDRESS = "http://192.168.0.103:7778/acc";
 	// public final static String ADDRESS = "http://140.114.202.174:7778/acc";
-	 public final static String ADDRESS = "http://proxy71.weaved.com:39018/acc";
+	// public final static String ADDRESS = "http://proxy71.weaved.com:39018/acc";
 	protected void setup() {
 		
 	
@@ -131,8 +131,9 @@ public void showFinalTally(ACLMessage msg){
 	double savings =  initialVirginCost - finalCost;
 	int appsOff = fu.countOffAppliances(casa.getAppliances());
 	double index = fu.ComfortIndex(casa.getAppliances());
-	ACLMessage reply  = new ACLMessage(ACLMessage.CONFIRM);
-
+	//ACLMessage reply   = new ACLMessage(ACLMessage.CONFIRM);
+	ACLMessage reply = msg.createReply();
+	reply.setPerformative(ACLMessage.CONFIRM);
 	double[] results = new double[3];
 	results[0] = index;
 	results[1] = initialVirginCost;
@@ -141,9 +142,9 @@ public void showFinalTally(ACLMessage msg){
 	reply.setConversationId("results");
 	reply.setReplyWith("Request" + System.currentTimeMillis());
 	String json = gson.toJson(results);
-	AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-	receiver.addAddresses(ADDRESS);
-	reply.addReceiver(receiver);
+//	AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+	//receiver.addAddresses(ADDRESS);
+	//reply.addReceiver(receiver);
 	reply.setContent(json);
 	send(reply);
 	System.out.println("For: " + getAID().getLocalName());
@@ -160,7 +161,8 @@ public void showFinalTally(ACLMessage msg){
 public void sendInitialSchedule(ACLMessage msg){
 	String content = msg.getContent();
 	
-	ACLMessage reply = new ACLMessage(ACLMessage.INFORM);;
+	ACLMessage reply = msg.createReply();
+	
 	if (content != null){
 		//Calculate consumption for this house
 		Function fu = new Function();
@@ -175,11 +177,11 @@ public void sendInitialSchedule(ACLMessage msg){
 		 double checkInitLoad = fu.calculateHoraLoad(casa.getAppliances());
 		System.out.println(getAID().getLocalName() + " reported " + initialLoad + " checker " + checkInitLoad);
 		//Prepare message
-		
+		reply.setPerformative(ACLMessage.INFORM);
 		reply.setConversationId(DAILY);
-		AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-		receiver.addAddresses(ADDRESS);
-		reply.addReceiver(receiver);
+		//AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+	//	receiver.addAddresses(ADDRESS);
+	//	reply.addReceiver(receiver);
 		Gson gson = new Gson();
 		startSentInit = System.currentTimeMillis();
 		consumptionSchedule[24] = startSentInit;
@@ -227,16 +229,16 @@ public void optimizeSchedule(ACLMessage msg){
 				 myLogger.log(Logger.INFO, "Over budget for non shift");
 				 fu.turnOffAllShiftAppliances(casa.getAppliances());
 				 localLoad = fu.calculateHourlyLoad(casa);
-
-				 ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
-
+				 ACLMessage reply = msg.createReply();
+				// ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
+				 reply.setPerformative(ACLMessage.INFORM);
 				 localLoad[25] = receiptTime;
 				 String json = gson.toJson(localLoad);
 				 reply.setConversationId("prices");
 				 reply.setContent(json);
-				 AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-					receiver.addAddresses(ADDRESS);
-					reply.addReceiver(receiver);
+				// AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+					//receiver.addAddresses(ADDRESS);
+					//reply.addReceiver(receiver);
 				 System.out.println("For " + getAID().getName() + " Initial cost was: " + initialVirginCost + " Final cost is: " + finalCost );
 				 send(reply);		
 			 }
@@ -250,7 +252,10 @@ public void optimizeSchedule(ACLMessage msg){
 				//Recalculate energy needs	
 				//Get consumption schedule for the next hour for this house
 				localLoad = fu.calculateHourlyLoad(casa);
-				ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
+				
+				//ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
+				ACLMessage reply = msg.createReply();
+				reply.setPerformative(ACLMessage.INFORM);
 				gson = new Gson();
 				lastCost = fu.calculateOverallCost(casa);
 				initialAlgorithmCost = lastCost;
@@ -260,9 +265,9 @@ public void optimizeSchedule(ACLMessage msg){
 				System.out.println("Load of house is: " + fu.calculateHouseLoad(localLoad) );
 				System.out.println(getAID().getLocalName() + " turned off " + offApp + " appliances in this round");
 				reply.setConversationId("prices");
-				AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-				receiver.addAddresses(ADDRESS);
-				reply.addReceiver(receiver);
+				//AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+				//receiver.addAddresses(ADDRESS);
+				//reply.addReceiver(receiver);
 				send(reply); 	
 			 } //end of checking game for the first round
 			 
@@ -287,7 +292,9 @@ public void optimizeSchedule(ACLMessage msg){
 					 gson = new Gson();
 					 localLoad[25] = receiptTime;
 					localLoad[26] = fu.ComfortIndex(casa.getAppliances());
-					 ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
+					 //ACLMessage reply  = new ACLMessage(ACLMessage.INFORM);
+					 ACLMessage reply = msg.createReply();
+					 reply.setPerformative(ACLMessage.INFORM);
 					 reply.setConversationId(PRICE);
 					 String json = gson.toJson(localLoad); //JSONfy
 					 reply.setContent(json);
@@ -295,15 +302,17 @@ public void optimizeSchedule(ACLMessage msg){
 					 double thisCost = fu.calculateOverallCost(casa);
 					 System.out.println("For " + getAID().getName() + " Last cost was: " + lastCost + " New cost is : " + thisCost );
 					 lastCost = thisCost;
-					 AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-						receiver.addAddresses(ADDRESS);
-						 System.out.println("Sent to " + receiver);
-						reply.addReceiver(receiver);
+					// AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+						//receiver.addAddresses(ADDRESS);
+						 //System.out.println("Sent to " + receiver);
+						//reply.addReceiver(receiver);
 					 send(reply); 
 			 }
 			 else{ //price didn't change
-				 ACLMessage reply  = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-				 reply.setConversationId(PRICE);
+				// ACLMessage reply  = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+				ACLMessage reply = msg.createReply();
+				reply.setPerformative(ACLMessage.INFORM);
+				reply.setConversationId(PRICE);
 				  localLoad = fu.calculateHourlyLoad(casa);
 					 System.out.println("sent acceptance");
 
@@ -318,9 +327,9 @@ public void optimizeSchedule(ACLMessage msg){
 			//	  double[]consumptionSchedule = fu.calculateHourlyConsumption(casa); 
 				 finalLoad = fu.calculateHouseLoad(localLoad);
 				 System.out.println("For " + getAID().getName() + "Initial budget was : " + casa.getBudget() + " Initial consumption was: " + initialVirginCost + " Final consumption was: " + finalCost + " apps off : " + off + "  apps on : " + on + " initial load was: " + initialLoad + " Final house load is: " + finalLoad);
-				 AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-					receiver.addAddresses(ADDRESS);
-					reply.addReceiver(receiver);
+			//	 AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+				//	receiver.addAddresses(ADDRESS);
+					//reply.addReceiver(receiver);
 				 send(reply);
 
 				 	 

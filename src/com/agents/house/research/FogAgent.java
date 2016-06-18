@@ -81,7 +81,7 @@ public class FogAgent extends Agent {
 	 public final static String RESULTS = "results";
 	 public final static String LIST = "List";
 	 
-	// public final static String ADDRESS = "ws://192.168.0.3:7778/acc";
+	 //public final static String ADDRESS = "ws://192.168.0.3:7778/acc";
 	 public final static String ADDRESS = "ws://140.114.202.174:7778/acc";
 
 	
@@ -138,12 +138,9 @@ public class FogAgent extends Agent {
 			
 			ACLMessage msg = receive();
 			if (msg != null){
-				System.out.println("Received message from :" + msg.getSender().getLocalName());
-
 				if (msg.getPerformative() == ACLMessage.INFORM){
 					
 					if (LIST.equals(msg.getConversationId())){
-						System.out.println("Received!");
 						try {
 							requestInitialSchedules(msg);
 						} catch (Exception e) {

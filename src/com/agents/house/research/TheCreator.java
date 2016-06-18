@@ -85,6 +85,7 @@ public class TheCreator extends Agent {
 						System.out.println(myAgent.getLocalName() + " Received message from " + msg.getSender() );
 						//ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
 						ACLMessage reply = msg.createReply();
+						reply.setPerformative(ACLMessage.INFORM);
 						//reply.addReceiver(msg.getSender());
 						//String[] address = msg.getSender().getAddressesArray();
 						//AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
