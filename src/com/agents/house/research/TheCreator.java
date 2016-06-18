@@ -83,16 +83,21 @@ public class TheCreator extends Agent {
 					if (GATHER.equals(msg.getConversationId())){ //gather all houses
 						gatherHouses();
 						System.out.println(myAgent.getLocalName() + " Received message from " + msg.getSender() );
-						ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
-						AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
-						receiver.addAddresses("http://proxy70.yoics.net:35712");
-						reply.addReceiver(receiver);
+						//ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
+						ACLMessage reply = msg.createReply();
+						//reply.addReceiver(msg.getSender());
+						//String[] address = msg.getSender().getAddressesArray();
+						//AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+						//receiver.addAddresses(address[0]);
+						//AID receiver = new AID("fog1@FogPlatform",AID.ISGUID);
+						//receiver.addAddresses("http://proxy70.yoics.net:35712");
+						//reply.addReceiver(receiver);
 						reply.setConversationId("List");
 						Gson gson = new Gson();
 						String json = gson.toJson(listOfHouses);
 						reply.setContent(json);
 						send(reply);
-						System.out.println("Sent names of agents to " + receiver);
+						System.out.println("Sent names of agents to " + msg.getSender());
 					}
 				}
 				else{
